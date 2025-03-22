@@ -1,25 +1,116 @@
-import { CloseOutlined, RightOutlined } from "@ant-design/icons";
+import { CheckOutlined, CloseOutlined, RightOutlined } from "@ant-design/icons";
 import { Button, Col, Divider, Row, Typography } from "antd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useHideMenu from "../hooks/useHideMenu";
 import getUserStorage from "../helpers/getUserStorage";
 import { Navigate, useNavigate } from "react-router";
+import { connectToWebSockets } from "../services/WebSocketService";
 
 const { Title, Text } = Typography;
 
 const ModulePage: React.FC = () => {
+  useHideMenu(false);
+
+  interface Ticket {
+    id: string;
+    number: number;
+    createdAt: Date;
+    done: boolean;
+  }
+
   const [user] = useState(getUserStorage());
   const navigate = useNavigate();
 
-  useHideMenu(false);
+  const [pendingTickets, setPendingTickets] = useState<number[]>([]);
+  const [currentTicket, setCurrentTicket] = useState<number | null>(null);
+  const [workingTicket, setWorkingTicket] = useState<Ticket | null>(null);
 
-  const Exit = () => {
+  useEffect(() => {
+    const getPendingTickets = async () => {
+      try {
+        const resp = await fetch("http://localhost:3000/api/tickets/pending");
+        if (!resp.ok) {
+          throw new Error(`Error al obtener los tickets: ${resp.statusText}`);
+        }
+        const data = await resp.json();
+        setPendingTickets(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getPendingTickets();
+  }, []);
+
+  useEffect(() => {
+    const socket = connectToWebSockets();
+
+    socket.onmessage = (event) => {
+      const { type, payload } = JSON.parse(event.data);
+      if (type !== "on-ticket-count-changed") return;
+      setPendingTickets(payload);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const onExit = async () => {
     localStorage.clear();
-    navigate("/asesor/ingresar");
+    await navigate("/asesor/ingresar");
   };
 
-  const Next = () => {
-    console.log("Atendiendo siguiente ticket...");
+  const onNextTicket = async () => {
+    try {
+      await onFinishTicket();
+      const resp = await fetch(
+        `http://localhost:3000/api/tickets/draw/${user.module}`
+      );
+      if (!resp.ok) {
+        throw new Error(
+          `Error al obtener el siguiente ticket: ${resp.statusText}`
+        );
+      }
+      const { ticket, status } = await resp.json();
+
+      if (status === "error") {
+        setCurrentTicket(null);
+        console.log("No hay tickets pendientes");
+      } else {
+        setCurrentTicket(ticket.number);
+        setWorkingTicket(ticket);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onFinishTicket = async () => {
+    try {
+      if (!currentTicket) return;
+      if (!workingTicket) {
+        throw new Error("No working ticket to finish.");
+      }
+
+      const resp = await fetch(
+        `http://localhost:3000/api/tickets/done/${workingTicket.id}`,
+        {
+          method: "PUT",
+        }
+      );
+      if (!resp.ok) {
+        throw new Error(`Error al finalizar el ticket: ${resp.statusText}`);
+      }
+      const { status } = await resp.json();
+
+      if (status === "error") {
+        console.log("No se pudo finalizar el ticket");
+      } else {
+        setCurrentTicket(null);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   if (!user.userName || !user.module) {
@@ -28,13 +119,21 @@ const ModulePage: React.FC = () => {
 
   return (
     <>
-      <Row justify={"end"}>
-        <Col style={{ textAlign: "right" }}>
+      <Row justify={"space-between"}>
+        <Col>
+          <Text strong style={{ fontSize: 20 }}>
+            Tickets en cola:{" "}
+          </Text>
+          <Text strong type="danger" style={{ fontSize: 20 }}>
+            {pendingTickets ? pendingTickets.length : 0}
+          </Text>
+        </Col>
+        <Col>
           <Button
             icon={<CloseOutlined />}
             danger
             onClick={() => {
-              Exit();
+              onExit();
             }}
           >
             Salir
@@ -54,27 +153,42 @@ const ModulePage: React.FC = () => {
 
       <Divider />
 
-      <Row justify={"center"}>
-        <Col>
-          <Text>Está atendiendo el Ticket número: </Text>
-        </Col>
-      </Row>
+      {currentTicket && (
+        <Row justify={"center"}>
+          <Col>
+            <Text>Atendiendo el Ticket número: </Text>
+          </Col>
+        </Row>
+      )}
 
       <Row justify={"center"}>
         <Col>
           <Text strong type="danger" style={{ fontSize: 50 }}>
-            1
+            {currentTicket}
           </Text>
         </Col>
       </Row>
 
       <Row justify={"end"}>
         <Col style={{ textAlign: "right" }}>
+          {currentTicket && (
+            <Button
+              color="green"
+              variant="outlined"
+              icon={<CheckOutlined />}
+              onClick={() => {
+                onFinishTicket();
+              }}
+            >
+              Terminar
+            </Button>
+          )}
+          <Divider type="vertical" />
           <Button
             type="primary"
             icon={<RightOutlined />}
             onClick={() => {
-              Next();
+              onNextTicket();
             }}
           >
             Siguiente

@@ -1,5 +1,4 @@
-import React from "react";
-import { tickets } from "../constants/TicketsFake";
+import React, { useEffect, useState } from "react";
 import { Card, Col, Divider, Flex, List, Row, Tag, Typography } from "antd";
 import useHideMenu from "../hooks/useHideMenu";
 
@@ -7,6 +6,45 @@ const { Title, Text } = Typography;
 
 const Tickets: React.FC = () => {
   useHideMenu(true);
+
+  interface Ticket {
+    number: number;
+    handleAtModule: string;
+  }
+
+  const [workingOnTickets, setWorkingOnTickets] = useState<Ticket[]>();
+
+  useEffect(() => {
+    const getWorkingOnTickets = async () => {
+      try {
+        const resp = await fetch(
+          "http://localhost:3000/api/tickets/working-on"
+        );
+        if (!resp.ok) {
+          throw new Error(`Error al obtener los tickets: ${resp.statusText}`);
+        }
+        const data = await resp.json();
+        setWorkingOnTickets(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getWorkingOnTickets();
+  }, []);
+
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:3000/ws");
+
+    socket.onmessage = (event) => {
+      const { type, payload } = JSON.parse(event.data);
+      if (type !== "on-working-on-ticket-changed") return;
+      setWorkingOnTickets(payload);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   return (
     <>
@@ -16,7 +54,7 @@ const Tickets: React.FC = () => {
       <Row>
         <Col lg={12} sm={24}>
           <List
-            dataSource={tickets.slice(0, 3)}
+            dataSource={workingOnTickets?.slice(0, 3)}
             renderItem={(item) => (
               <List.Item style={{ borderBlockEnd: "none" }}>
                 <Card
@@ -25,16 +63,12 @@ const Tickets: React.FC = () => {
                     margin: "auto",
                   }}
                   actions={[
-                    <Tag color="volcano">
-                      {item.agente.length > 20
-                        ? `${item.agente.slice(0, 12)}...`
-                        : item.agente}
-                    </Tag>,
-                    <Tag color="magenta">Módulo: {item.escritorio}</Tag>,
+                    <Tag color="volcano">Mario</Tag>,
+                    <Tag color="magenta">Módulo: {item.handleAtModule}</Tag>,
                   ]}
                 >
                   <Title style={{ textAlign: "center" }}>
-                    No. {item.ticketNo}
+                    No. {item.number}
                   </Title>
                 </Card>
               </List.Item>
@@ -46,7 +80,7 @@ const Tickets: React.FC = () => {
           <Divider> Historial </Divider>
           <List
             bordered
-            dataSource={tickets.slice(3)}
+            dataSource={workingOnTickets?.slice(3)}
             style={{
               maxHeight: 600,
               overflowY: "auto",
@@ -56,20 +90,16 @@ const Tickets: React.FC = () => {
             renderItem={(item) => (
               <List.Item>
                 <List.Item.Meta
-                  title={`Ticket No. ${item.ticketNo}`}
+                  title={`Ticket No. ${item.number}`}
                   description={
                     <Flex justify="flex-start">
                       <div>
                         <Text type="secondary">En el escritorio: </Text>
-                        <Tag color="magenta">{item.escritorio}</Tag>
+                        <Tag color="magenta">{item.handleAtModule}</Tag>
                       </div>
                       <div>
                         <Text type="secondary">Agente: </Text>
-                        <Tag color="volcano">
-                          {item.agente.length > 20
-                            ? `${item.agente.slice(0, 12)}...`
-                            : item.agente}
-                        </Tag>
+                        <Tag color="volcano">Mario</Tag>
                       </div>
                     </Flex>
                   }
