@@ -1,9 +1,8 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Layout, Menu } from "antd";
 import { Segmented } from "antd";
 import { ThemeAppearance } from "antd-style";
 import { useLocation } from "react-router";
-import { UiContext } from "../context/UiContext";
 
 const { Header: AntHeader } = Layout;
 
@@ -21,12 +20,10 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ appearance, setTheme, items }) => {
   const location = useLocation();
 
-  const { isMenuCollapsed } = useContext(UiContext)!;
-
   return (
     <AntHeader
       style={{
-        display: isMenuCollapsed ? "none" : "flex",
+        display: "flex",
         alignItems: "center",
       }}
     >
