@@ -1,5 +1,7 @@
+import { BASE_WS_URL } from "./api";
+
 export const connectToWebSockets = () => {
-  const socket = new WebSocket("ws://localhost:3000/ws");
+  const socket = new WebSocket(BASE_WS_URL);
 
   socket.onopen = () => {
     console.log("Connected");

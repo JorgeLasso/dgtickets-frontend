@@ -3,6 +3,7 @@ import { Button, Col, Divider, Row, Typography } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import useHideMenu from "../hooks/useHideMenu";
 import { connectToWebSockets } from "../services/WebSocketService";
+import { BASE_API_URL } from "../services/api";
 
 const { Title, Text } = Typography;
 
@@ -22,7 +23,7 @@ const CreateTicket: React.FC = () => {
   useEffect(() => {
     try {
       const getLastTicket = async () => {
-        const resp = await fetch("http://localhost:3000/api/tickets/last");
+        const resp = await fetch(`${BASE_API_URL}/tickets/last`);
         const data = await resp.json();
         setLastTicket(data);
       };
@@ -48,7 +49,7 @@ const CreateTicket: React.FC = () => {
 
   const createNewTicket = async () => {
     try {
-      const resp = await fetch("http://localhost:3000/api/tickets", {
+      const resp = await fetch(`${BASE_API_URL}/tickets`, {
         method: "POST",
       });
 

@@ -5,6 +5,7 @@ import useHideMenu from "../hooks/useHideMenu";
 import getUserStorage from "../helpers/getUserStorage";
 import { Navigate, useNavigate } from "react-router";
 import { connectToWebSockets } from "../services/WebSocketService";
+import { BASE_API_URL } from "../services/api";
 
 const { Title, Text } = Typography;
 
@@ -28,7 +29,7 @@ const ModulePage: React.FC = () => {
   useEffect(() => {
     const getPendingTickets = async () => {
       try {
-        const resp = await fetch("http://localhost:3000/api/tickets/pending");
+        const resp = await fetch(`${BASE_API_URL}/tickets/pending`);
         if (!resp.ok) {
           throw new Error(`Error al obtener los tickets: ${resp.statusText}`);
         }
@@ -63,9 +64,7 @@ const ModulePage: React.FC = () => {
   const onNextTicket = async () => {
     try {
       await onFinishTicket();
-      const resp = await fetch(
-        `http://localhost:3000/api/tickets/draw/${user.module}`
-      );
+      const resp = await fetch(`${BASE_API_URL}/tickets/draw/${user.module}`);
       if (!resp.ok) {
         throw new Error(
           `Error al obtener el siguiente ticket: ${resp.statusText}`
@@ -93,7 +92,7 @@ const ModulePage: React.FC = () => {
       }
 
       const resp = await fetch(
-        `http://localhost:3000/api/tickets/done/${workingTicket.id}`,
+        `${BASE_API_URL}/tickets/done/${workingTicket.id}`,
         {
           method: "PUT",
         }

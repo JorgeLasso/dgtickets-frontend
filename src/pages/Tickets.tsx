@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, Col, Divider, Flex, List, Row, Tag, Typography } from "antd";
 import useHideMenu from "../hooks/useHideMenu";
+import { BASE_API_URL, BASE_WS_URL } from "../services/api";
 
 const { Title, Text } = Typography;
 
@@ -17,9 +18,7 @@ const Tickets: React.FC = () => {
   useEffect(() => {
     const getWorkingOnTickets = async () => {
       try {
-        const resp = await fetch(
-          "http://localhost:3000/api/tickets/working-on"
-        );
+        const resp = await fetch(`${BASE_API_URL}/tickets/working-on`);
         if (!resp.ok) {
           throw new Error(`Error al obtener los tickets: ${resp.statusText}`);
         }
@@ -33,7 +32,7 @@ const Tickets: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:3000/ws");
+    const socket = new WebSocket(BASE_WS_URL);
 
     socket.onmessage = (event) => {
       const { type, payload } = JSON.parse(event.data);
