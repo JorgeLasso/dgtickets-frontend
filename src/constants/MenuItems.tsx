@@ -13,4 +13,12 @@ export const items = [
     key: "/asesor/ingresar",
     label: <Link to="/asesor/ingresar">Asesor</Link>,
   },
+  {
+    key: "/login",
+    label: <Link to="/login">Ingresar</Link>,
+  },
+  {
+    key: "/registro",
+    label: <Link to="/registro">Registro</Link>,
+  },
 ];
