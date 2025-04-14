@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button, Form, Input, Typography } from "antd";
-import { BASE_API_URL } from "../services/api";
+import { ChangePasswordFormValues } from "../types/auth/auth.types";
 import useNotification from "../hooks/useNotification";
+import useFetch from "../hooks/useFetch";
+import { useNavigate } from "react-router";
 
 const { Title } = Typography;
 
@@ -29,40 +31,19 @@ const tailFormItemLayout = {
   },
 };
 
-interface FormValues {
-  email: string;
-  password: string;
-  confirm: string;
-}
-
 const ChangePassword: React.FC = () => {
   const [form] = Form.useForm();
   const { openNotification } = useNotification();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { isLoading, post } = useFetch();
+  const navigate = useNavigate();
 
-  const onFinish = async (values: FormValues) => {
-    setIsLoading(true);
+  const onFinish = async (values: ChangePasswordFormValues) => {
     try {
       const token = new URLSearchParams(window.location.search).get("token");
-      const response = await fetch(`${BASE_API_URL}/auth/update-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...values,
-          token,
-        }),
+      await post("/auth/update-password", {
+        ...values,
+        token,
       });
-
-      if (!response.ok) {
-        openNotification(
-          "error",
-          "Error al cambiar la contraseña",
-          "No se pudo cambiar la contraseña, intenta nuevamente!"
-        );
-        return;
-      }
 
       openNotification(
         "success",
@@ -78,7 +59,7 @@ const ChangePassword: React.FC = () => {
         "Ocurrió un error inesperado, intenta nuevamente!"
       );
     } finally {
-      setIsLoading(false);
+      navigate("/login");
     }
   };
 

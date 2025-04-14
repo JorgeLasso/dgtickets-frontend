@@ -5,42 +5,36 @@ import useHideMenu from "../hooks/useHideMenu";
 import getUserStorage from "../helpers/getUserStorage";
 import { Navigate, useNavigate } from "react-router";
 import { connectToWebSockets } from "../services/WebSocketService";
-import { BASE_API_URL } from "../services/api";
+import { Ticket } from "../types/ticket/ticket.types";
+import useFetch from "../hooks/useFetch";
 
 const { Title, Text } = Typography;
 
 const ModulePage: React.FC = () => {
   useHideMenu(false);
 
-  interface Ticket {
-    id: string;
-    number: number;
-    createdAt: Date;
-    done: boolean;
-  }
-
   const [user] = useState(getUserStorage());
   const navigate = useNavigate();
+  const { get, put, isLoading } = useFetch();
 
   const [pendingTickets, setPendingTickets] = useState<number[]>([]);
   const [currentTicket, setCurrentTicket] = useState<number | null>(null);
   const [workingTicket, setWorkingTicket] = useState<Ticket | null>(null);
+  const [loadingExit, setLoadingExit] = useState(false);
+  const [loadingFinish, setLoadingFinish] = useState(false);
+  const [loadingNext, setLoadingNext] = useState(false);
 
   useEffect(() => {
     const getPendingTickets = async () => {
       try {
-        const resp = await fetch(`${BASE_API_URL}/tickets/pending`);
-        if (!resp.ok) {
-          throw new Error(`Error al obtener los tickets: ${resp.statusText}`);
-        }
-        const data = await resp.json();
+        const data = await get("/tickets/pending");
         setPendingTickets(data);
       } catch (error) {
         console.log(error);
       }
     };
     getPendingTickets();
-  }, []);
+  }, [get]);
 
   useEffect(() => {
     const socket = connectToWebSockets();
@@ -57,58 +51,52 @@ const ModulePage: React.FC = () => {
   }, []);
 
   const onExit = async () => {
-    localStorage.clear();
-    await navigate("/asesor/ingresar");
+    setLoadingExit(true);
+    try {
+      localStorage.clear();
+      await navigate("/asesor/ingresar");
+    } finally {
+      setLoadingExit(false);
+    }
   };
 
   const onNextTicket = async () => {
+    setLoadingNext(true);
     try {
       await onFinishTicket();
-      const resp = await fetch(`${BASE_API_URL}/tickets/draw/${user.module}`);
-      if (!resp.ok) {
-        throw new Error(
-          `Error al obtener el siguiente ticket: ${resp.statusText}`
-        );
-      }
-      const { ticket, status } = await resp.json();
+      const data = await get(`/tickets/draw/${user.module}`);
 
-      if (status === "error") {
+      if (data.status === "error") {
         setCurrentTicket(null);
         console.log("No hay tickets pendientes");
       } else {
-        setCurrentTicket(ticket.number);
-        setWorkingTicket(ticket);
+        setCurrentTicket(data.ticket.number);
+        setWorkingTicket(data.ticket);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoadingNext(false);
     }
   };
 
   const onFinishTicket = async () => {
+    if (!currentTicket) return;
+    if (!workingTicket) return;
+
+    setLoadingFinish(true);
     try {
-      if (!currentTicket) return;
-      if (!workingTicket) {
-        throw new Error("No working ticket to finish.");
-      }
+      const data = await put(`/tickets/done/${workingTicket.id}`, {});
 
-      const resp = await fetch(
-        `${BASE_API_URL}/tickets/done/${workingTicket.id}`,
-        {
-          method: "PUT",
-        }
-      );
-      if (!resp.ok) {
-        throw new Error(`Error al finalizar el ticket: ${resp.statusText}`);
-      }
-      const { status } = await resp.json();
-
-      if (status === "error") {
+      if (data.status === "error") {
         console.log("No se pudo finalizar el ticket");
       } else {
         setCurrentTicket(null);
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoadingFinish(false);
     }
   };
 
@@ -131,9 +119,9 @@ const ModulePage: React.FC = () => {
           <Button
             icon={<CloseOutlined />}
             danger
-            onClick={() => {
-              onExit();
-            }}
+            onClick={onExit}
+            loading={loadingExit}
+            disabled={loadingExit || isLoading}
           >
             Salir
           </Button>
@@ -175,22 +163,22 @@ const ModulePage: React.FC = () => {
               color="green"
               variant="outlined"
               icon={<CheckOutlined />}
-              onClick={() => {
-                onFinishTicket();
-              }}
+              onClick={onFinishTicket}
+              loading={loadingFinish}
+              disabled={loadingFinish || loadingNext || isLoading}
             >
-              Terminar
+              {loadingFinish ? "Terminando..." : "Terminar"}
             </Button>
           )}
           <Divider type="vertical" />
           <Button
             type="primary"
             icon={<RightOutlined />}
-            onClick={() => {
-              onNextTicket();
-            }}
+            onClick={onNextTicket}
+            loading={loadingNext}
+            disabled={loadingNext || loadingFinish || isLoading}
           >
-            Siguiente
+            {loadingNext ? "Cargando..." : "Siguiente"}
           </Button>
         </Col>
       </Row>

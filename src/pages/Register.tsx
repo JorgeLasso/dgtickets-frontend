@@ -1,8 +1,11 @@
+import React, { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router";
 import { Button, Form, Input, Row, Select, Typography } from "antd";
-import { BASE_API_URL } from "../services/api";
+import { RegisterFormValues } from "../types/auth/auth.types";
+import { City } from "../types/user/user.types";
 import useNotification from "../hooks/useNotification";
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { AuthContext } from "../auth/AuthContext";
+import useFetch from "../hooks/useFetch";
 
 const { Title } = Typography;
 
@@ -30,38 +33,25 @@ const tailFormItemLayout = {
   },
 };
 
-interface Register {
-  firstName: string;
-  lastName: string;
-  cityId: number;
-  email: string;
-  password: string;
-  confirm: string;
-}
-
-interface City {
-  id: number;
-  name: string;
-  image: string;
-  isActive: boolean;
-  stateId: number;
-}
-
 const Register: React.FC = () => {
   const [form] = Form.useForm();
   const { openNotification } = useNotification();
   const [cities, setCities] = useState<City[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { get } = useFetch<City[]>();
+  const auth = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  if (!auth) {
+    throw new Error("AuthContext must be used within an AuthProvider");
+  }
+
+  const { register, isLoading } = auth;
 
   useEffect(() => {
     const getCities = async () => {
       try {
-        const response = await fetch(`${BASE_API_URL}/cities`);
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error("Error al obtener las ciudades");
-        }
-        setCities(data.cities);
+        const { cities } = await get("/cities");
+        setCities(cities || []);
       } catch (error) {
         console.error(error);
         openNotification(
@@ -72,54 +62,18 @@ const Register: React.FC = () => {
       }
     };
     getCities();
-  }, [openNotification]);
+  }, [get, openNotification]);
 
-  const onFinish = async (values: Register) => {
-    setIsLoading(true);
+  const onFinish = async (values: RegisterFormValues) => {
     try {
       const { firstName, lastName, cityId, email, password } = values;
-      const userData = {
-        firstName,
-        lastName,
-        email,
-        password,
-        cityId,
-        photo: null,
-      };
 
-      const response = await fetch(`${BASE_API_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        openNotification(
-          "error",
-          "Error al registrar",
-          "Error en el registro de usuario, intenta nuevamente!"
-        );
-        return;
-      }
-
-      openNotification(
-        "info",
-        "Registro exitoso",
-        "Usuario registrado correctamente, por favor revisa tu correo electrónico para activar tu cuenta!"
-      );
-
-      form.resetFields();
+      register(firstName, lastName, email, password, cityId, null);
     } catch (error) {
       console.error("Error al registrar el usuario: ", error);
-      openNotification(
-        "error",
-        "Error al registrar",
-        "Error en el registro de usuario, intenta nuevamente!"
-      );
     } finally {
-      setIsLoading(false);
+      form.resetFields();
+      navigate("/login");
     }
   };
 

@@ -1,21 +1,42 @@
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { Button, Checkbox, Flex, Form, Input, Row, Typography } from "antd";
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import { Link } from "react-router";
+import { LoginFormValues } from "../types/auth/auth.types";
+import { AuthContext } from "../auth/AuthContext";
 
 const { Title } = Typography;
 
-interface FormValues {
-  email: string;
-  password: string;
-  remember: boolean;
-}
-
 const Login: React.FC = () => {
-  const onFinish = ({ email, password, remember }: FormValues) => {
-    localStorage.setItem("email", email);
-    localStorage.setItem("password", password);
-    localStorage.setItem("remember", remember.toString());
+  const authContext = useContext(AuthContext);
+  if (!authContext) {
+    throw new Error("AuthContext must be used within an AuthProvider");
+  }
+  const { login, isLoading } = authContext;
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    const email = localStorage.getItem("email");
+    if (email) {
+      form.setFieldsValue({ email });
+      form.setFieldValue("remember", true);
+    }
+  }, [form]);
+
+  const onFinish = async ({ email, password, remember }: LoginFormValues) => {
+    if (remember) {
+      localStorage.setItem("email", email);
+    } else {
+      localStorage.removeItem("email");
+    }
+
+    try {
+      login(email, password);
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error);
+    } finally {
+      form.resetFields();
+    }
   };
 
   return (
@@ -24,6 +45,7 @@ const Login: React.FC = () => {
         Ingresar
       </Title>
       <Form
+        form={form}
         name="login"
         initialValues={{ remember: true }}
         style={{ maxWidth: 300, margin: "auto" }}
@@ -31,6 +53,7 @@ const Login: React.FC = () => {
       >
         <Form.Item
           name="email"
+          initialValue={localStorage.getItem("email") || ""}
           rules={[
             {
               required: true,
@@ -62,8 +85,14 @@ const Login: React.FC = () => {
         </Form.Item>
 
         <Form.Item>
-          <Button block type="primary" htmlType="submit">
-            Iniciar Sesión
+          <Button
+            block
+            type="primary"
+            htmlType="submit"
+            loading={isLoading}
+            disabled={isLoading}
+          >
+            {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
           </Button>
         </Form.Item>
       </Form>

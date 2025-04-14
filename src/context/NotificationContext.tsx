@@ -1,7 +1,6 @@
-import React, { createContext, ReactNode } from "react";
+import React, { createContext } from "react";
 import { notification } from "antd";
-
-type NotificationType = "success" | "error" | "info" | "warning";
+import { NotificationType } from "../types/notification/notification.types";
 
 interface NotificationContextProps {
   openNotification: (
@@ -16,7 +15,7 @@ const NotificationContext = createContext<NotificationContextProps | undefined>(
 );
 
 interface NotificationProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 const NotificationProvider: React.FC<NotificationProviderProps> = ({

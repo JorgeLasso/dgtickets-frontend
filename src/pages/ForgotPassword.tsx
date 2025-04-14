@@ -1,36 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import { Form, Input, Button, Typography, Row } from "antd";
 import { MailOutlined } from "@ant-design/icons";
 import { Link } from "react-router";
-import { BASE_API_URL } from "../services/api";
 import useNotification from "../hooks/useNotification";
+import useFetch from "../hooks/useFetch";
 
 const { Title } = Typography;
 
 const ForgotPassword: React.FC = () => {
   const [form] = Form.useForm();
   const { openNotification } = useNotification();
-  const [isLoading, setIsLoading] = useState(false);
+  const { post, isLoading } = useFetch();
 
   const onFinish = async (values: { email: string }) => {
-    setIsLoading(true);
     try {
-      const response = await fetch(`${BASE_API_URL}/auth/recovery-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        openNotification(
-          "error",
-          "Error al enviar el correo",
-          "No se pudo enviar el correo de recuperación, intenta nuevamente!"
-        );
-        return;
-      }
+      await post("/auth/recovery-password", values);
 
       openNotification(
         "success",
@@ -45,8 +29,6 @@ const ForgotPassword: React.FC = () => {
         "Error al enviar el correo",
         "Ocurrió un error inesperado, intenta nuevamente!"
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -58,6 +40,7 @@ const ForgotPassword: React.FC = () => {
 
       <Form
         name="forgot-password-form"
+        form={form}
         style={{ maxWidth: 300, margin: "auto" }}
         onFinish={onFinish}
       >

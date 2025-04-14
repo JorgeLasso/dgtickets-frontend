@@ -4,13 +4,9 @@ import { Button, Form, Input, Typography } from "antd";
 import { Navigate, useNavigate } from "react-router";
 import useHideMenu from "../hooks/useHideMenu";
 import getUserStorage from "../helpers/getUserStorage";
+import { AdviserFormValues } from "../types/user/user.types";
 
 const { Title } = Typography;
-
-interface FormValues {
-  userName: string;
-  module: string;
-}
 
 const AdviserPage: React.FC = () => {
   const [user] = useState(getUserStorage());
@@ -19,7 +15,7 @@ const AdviserPage: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const onFinish = ({ userName, module }: FormValues) => {
+  const onFinish = ({ userName, module }: AdviserFormValues) => {
     localStorage.setItem("userName", userName);
     localStorage.setItem("module", module);
     navigate("/asesor/modulo");

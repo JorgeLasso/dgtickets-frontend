@@ -1,15 +1,7 @@
 import React from "react";
 import { Button, Result, Spin } from "antd";
 import { useNavigate } from "react-router";
-
-type ResultStatus =
-  | "success"
-  | "error"
-  | "info"
-  | "warning"
-  | "404"
-  | "403"
-  | "500";
+import { ResultStatus } from "../types/validation/validation.types";
 
 interface EmailValidationResultProps {
   status: ResultStatus;

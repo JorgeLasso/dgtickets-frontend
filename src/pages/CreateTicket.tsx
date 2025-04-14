@@ -3,35 +3,29 @@ import { Button, Col, Divider, Row, Typography } from "antd";
 import { DownloadOutlined } from "@ant-design/icons";
 import useHideMenu from "../hooks/useHideMenu";
 import { connectToWebSockets } from "../services/WebSocketService";
-import { BASE_API_URL } from "../services/api";
+import { Ticket } from "../types/ticket/ticket.types";
+import useFetch from "../hooks/useFetch";
 
 const { Title, Text } = Typography;
-
-interface Ticket {
-  id: string;
-  number: number;
-  createdAt: Date;
-  done: boolean;
-}
 
 const CreateTicket: React.FC = () => {
   useHideMenu(true);
 
   const [newTicket, setNewTicket] = useState<Ticket | null>(null);
   const [lastTicket, setLastTicket] = useState();
+  const { get, post, isLoading } = useFetch<Ticket>();
 
   useEffect(() => {
-    try {
-      const getLastTicket = async () => {
-        const resp = await fetch(`${BASE_API_URL}/tickets/last`);
-        const data = await resp.json();
+    const getLastTicket = async () => {
+      try {
+        const data = await get("/tickets/last");
         setLastTicket(data);
-      };
-      getLastTicket();
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getLastTicket();
+  }, [get]);
 
   useEffect(() => {
     const socket = connectToWebSockets();
@@ -49,12 +43,7 @@ const CreateTicket: React.FC = () => {
 
   const createNewTicket = async () => {
     try {
-      const resp = await fetch(`${BASE_API_URL}/tickets`, {
-        method: "POST",
-      });
-
-      const data = await resp.json();
-
+      const data = await post("/tickets");
       setNewTicket(data);
     } catch (error) {
       console.log(error);
@@ -87,8 +76,10 @@ const CreateTicket: React.FC = () => {
             icon={<DownloadOutlined />}
             size="large"
             onClick={() => createNewTicket()}
+            loading={isLoading}
+            disabled={isLoading}
           >
-            Nuevo Ticket
+            {isLoading ? "Creando Ticket..." : "Nuevo Ticket"}
           </Button>
         </Col>
       </Row>

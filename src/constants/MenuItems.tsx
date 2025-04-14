@@ -6,6 +6,10 @@ export const items = [
     label: <Link to="/tickets">Tickets</Link>,
   },
   {
+    key: "/medicamentos",
+    label: <Link to="/medicamentos">Medicamentos</Link>,
+  },
+  {
     key: "/crear",
     label: <Link to="/crear">Crear Ticket</Link>,
   },
