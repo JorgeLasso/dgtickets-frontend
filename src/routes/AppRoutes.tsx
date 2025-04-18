@@ -35,6 +35,10 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* Public Routes */}
+      <Route path="/tickets" element={<Tickets />} />
+      <Route path="/medicamentos" element={<MedicinesPage />} />
+
+      {/* Unlogin Routes */}
       <Route element={<PublicRoutes />}>
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
@@ -43,16 +47,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/auth/recovery-password" element={<ChangePassword />} />
       </Route>
 
-      {/* Tickets Page */}
-      <Route path="/tickets" element={<Tickets />} />
-
-      {/* Medicines Page */}
-      <Route path="/medicamentos" element={<MedicinesPage />} />
-
-      {/* Admin and Adviser Routes */}
-      <Route
-        element={<PrivateRoutes allowedRoles={[ROLES.ADMIN, ROLES.ADVISER]} />}
-      >
+      {/* User Routes */}
+      <Route element={<PrivateRoutes allowedRoles={[ROLES.USER]} />}>
         <Route path="/crear" element={<CreateTicket />} />
       </Route>
 
@@ -64,6 +60,11 @@ const AppRoutes: React.FC = () => {
 
       {/* Admin Routes */}
       <Route element={<PrivateRoutes allowedRoles={[ROLES.ADMIN]} />}></Route>
+
+      {/* Admin and Adviser Routes */}
+      <Route
+        element={<PrivateRoutes allowedRoles={[ROLES.ADMIN, ROLES.ADVISER]} />}
+      ></Route>
 
       {/* Default Route */}
       <Route path="*" element={<Navigate to="/tickets" replace />} />

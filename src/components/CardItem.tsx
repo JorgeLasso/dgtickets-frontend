@@ -1,9 +1,5 @@
 import React, { ReactNode } from "react";
-import {
-  EditOutlined,
-  EllipsisOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
+import { EditOutlined } from "@ant-design/icons";
 import { Card } from "antd";
 import { ItemProperty } from "../types/cards/cards.types";
 
@@ -22,11 +18,7 @@ const CardItem: React.FC<CardItemProps> = ({
   children,
   image = "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png",
   properties,
-  actions = [
-    <SettingOutlined key="setting" />,
-    <EditOutlined key="edit" />,
-    <EllipsisOutlined key="ellipsis" />,
-  ],
+  actions = [<EditOutlined key="edit" />],
 }) => (
   <Card
     type="inner"
@@ -34,7 +26,7 @@ const CardItem: React.FC<CardItemProps> = ({
     loading={loading}
     title={title}
     style={{ width: "100%", maxWidth: 300, margin: "0 auto" }}
-    cover={<img alt="img" src={image} />}
+    cover={<img alt="img" src={image} height={170} />}
     actions={actions}
   >
     {properties && properties.length > 0 ? (

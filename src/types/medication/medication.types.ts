@@ -7,6 +7,7 @@ export interface MedicineStock {
   unitOfMeasure: string;
   quantityPerUnit: number;
   isActive: boolean;
+  headquarterId: number;
 }
 
 export interface MedicineResponse {
@@ -16,4 +17,9 @@ export interface MedicineResponse {
   next: string | null;
   prev: string | null;
   medicineStocks: MedicineStock[];
+}
+
+export interface Headquarter {
+  id: number;
+  name: string;
 }

@@ -10,8 +10,8 @@ import { Segmented } from "antd";
 import { ThemeAppearance } from "antd-style";
 import { useLocation } from "react-router";
 import { AuthContext } from "../auth/AuthContext";
-import { ROLES } from "../constants/Roles";
 import { useMediaQuery } from "react-responsive";
+import { getFilteredMenuItems } from "../helpers/menuHelpers";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -30,40 +30,15 @@ const options = [
 interface HeaderProps {
   appearance: ThemeAppearance;
   setTheme: (theme: ThemeAppearance) => void;
-  items: { key: string; label: React.ReactNode }[];
 }
 
-const Header: React.FC<HeaderProps> = ({ appearance, setTheme, items }) => {
+const Header: React.FC<HeaderProps> = ({ appearance, setTheme }) => {
   const location = useLocation();
   const authContext = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
-  const filteredItems = items.filter((item) => {
-    if (item.key === "/tickets") {
-      return true;
-    }
-
-    if (!authContext || !authContext.auth.isLoggedIn) {
-      return item.key === "/login" || item.key === "/registro";
-    }
-
-    const userRole = authContext.auth.role;
-
-    if (item.key === "/crear") {
-      return userRole === ROLES.ADMIN || userRole === ROLES.ADVISER;
-    }
-
-    if (item.key === "/asesor/ingresar") {
-      return userRole === ROLES.ADVISER;
-    }
-
-    if (item.key === "/login" || item.key === "/registro") {
-      return false;
-    }
-
-    return true;
-  });
+  const filteredItems = getFilteredMenuItems(authContext?.auth || null);
 
   const handleLogout = () => {
     if (authContext) {
