@@ -5,11 +5,11 @@ import Pagination from "../components/Pagination";
 import {
   MedicineResponse,
   MedicineStock,
-  Headquarter,
 } from "../types/medication/medication.types";
 import useHideMenu from "../hooks/useHideMenu";
 import useNotification from "../hooks/useNotification";
 import useFetch from "../hooks/useFetch";
+import useHeadquarters from "../hooks/useHeadquarters";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import GenericFormModal from "../components/GenericFormModal";
 import {
@@ -26,7 +26,7 @@ const MedicinesPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [headquarters, setHeadquarters] = useState<Headquarter[]>([]);
+  const { headquarters } = useHeadquarters();
   const [selectedHeadquarter, setSelectedHeadquarter] = useState<number | null>(
     null
   );
@@ -39,7 +39,6 @@ const MedicinesPage: React.FC = () => {
   const [createForm] = Form.useForm<MedicineStock>();
   const { openNotification } = useNotification();
   const { isLoading: loading, get, put, post } = useFetch<MedicineResponse>();
-  const { get: getHeadquarters } = useFetch<{ headquarters: Headquarter[] }>();
 
   // Determine user permissions
   const authContext = useContext(AuthContext);
@@ -49,18 +48,6 @@ const MedicinesPage: React.FC = () => {
   const canEditOrAdd = auth.role
     ? [ROLES.ADVISER, ROLES.ADMIN].includes(auth.role)
     : false;
-
-  useEffect(() => {
-    const loadHeadquarters = async () => {
-      try {
-        const response = await getHeadquarters("/headquarters");
-        setHeadquarters(response.headquarters);
-      } catch (error) {
-        console.error("Error fetching headquarters:", error);
-      }
-    };
-    loadHeadquarters();
-  }, [getHeadquarters]);
 
   const medicineFormFields = [
     ...medicinesFormFields,

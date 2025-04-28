@@ -1,6 +1,6 @@
 import { Input, InputNumber, Checkbox, Select } from "antd";
 import { FormField } from "../types/forms/forms.types";
-import { Headquarter } from "../types/medication/medication.types";
+import { Headquarter } from "../types/headquarters/headquarter.types";
 
 export const medicinesFormFields: FormField[] = [
   {

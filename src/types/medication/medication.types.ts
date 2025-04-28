@@ -18,8 +18,3 @@ export interface MedicineResponse {
   prev: string | null;
   medicineStocks: MedicineStock[];
 }
-
-export interface Headquarter {
-  id: number;
-  name: string;
-}
