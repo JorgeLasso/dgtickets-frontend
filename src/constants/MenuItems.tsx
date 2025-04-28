@@ -2,8 +2,8 @@ import { Link } from "react-router";
 
 export const items = [
   {
-    key: "/tickets",
-    label: <Link to="/tickets">Tickets</Link>,
+    key: "/",
+    label: <Link to="/">Inicio</Link>,
   },
   {
     key: "/medicamentos",

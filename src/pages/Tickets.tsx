@@ -26,7 +26,7 @@ const Tickets: React.FC = () => {
   useEffect(() => {
     const getWorkingOnTickets = async () => {
       try {
-        const data = await get("/tickets/working-on");
+        const data = await get("/tickets_/row/4");
         setWorkingOnTickets(data || []);
       } catch (error) {
         console.log(error);
@@ -69,11 +69,11 @@ const Tickets: React.FC = () => {
                     }}
                     actions={[
                       <Tag color="volcano">Mario</Tag>,
-                      <Tag color="magenta">Módulo: {item.handleAtModule}</Tag>,
+                      <Tag color="magenta">Módulo: {item.id}</Tag>,
                     ]}
                   >
                     <Title style={{ textAlign: "center" }}>
-                      No. {item.number}
+                      No. {item.priority}
                     </Title>
                   </Card>
                 </List.Item>
@@ -98,12 +98,12 @@ const Tickets: React.FC = () => {
               renderItem={(item) => (
                 <List.Item>
                   <List.Item.Meta
-                    title={`Ticket No. ${item.number}`}
+                    title={`Ticket No. ${item.id}`}
                     description={
                       <Flex justify="flex-start">
                         <div>
                           <Text type="secondary">En el escritorio: </Text>
-                          <Tag color="magenta">{item.handleAtModule}</Tag>
+                          <Tag color="magenta">{item.priority}</Tag>
                         </div>
                         <div>
                           <Text type="secondary">Agente: </Text>

@@ -6,7 +6,7 @@ import { connectToWebSockets } from "../services/WebSocketService";
 import { Ticket_ } from "../types/ticket/ticket.types";
 import useFetch from "../hooks/useFetch";
 import { AuthContext } from "../auth/AuthContext";
-import useHeadquarters from "../hooks/useHeadquarters";
+import { HeadquarterContext } from "../context/HeadquarterContext";
 
 const { Title, Text } = Typography;
 
@@ -18,10 +18,8 @@ const CreateTicket: React.FC = () => {
   const [newTicket, setNewTicket] = useState<Ticket_ | null>(null);
   const [lastTicket, setLastTicket] = useState();
   const { get, post, isLoading } = useFetch<Ticket_>();
-  const { headquarters } = useHeadquarters();
-  const [selectedHeadquarter, setSelectedHeadquarter] = useState<
-    number | undefined
-  >(undefined);
+  const { headquarters, selectedHeadquarter, setSelectedHeadquarter } =
+    useContext(HeadquarterContext)!;
   const [priority, setPriority] = useState<boolean>(false);
 
   useEffect(() => {
@@ -57,7 +55,7 @@ const CreateTicket: React.FC = () => {
   }, []);
 
   const handleHeadquarterChange = (id: number | undefined) => {
-    setSelectedHeadquarter(id);
+    setSelectedHeadquarter(id ?? null);
     if (id === undefined) {
       setNewTicket(null);
     }

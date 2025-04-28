@@ -1,6 +1,5 @@
 import React, { useContext, useEffect } from "react";
 import { Route, Routes, Navigate } from "react-router";
-import Tickets from "../pages/Tickets";
 import CreateTicket from "../pages/CreateTicket";
 import AdviserPage from "../pages/AdviserPage";
 import ModulePage from "../pages/ModulePage";
@@ -10,6 +9,7 @@ import EmailValidated from "../pages/EmailValidated";
 import ForgotPassword from "../pages/ForgotPassword";
 import ChangePassword from "../pages/ChangePassword";
 import MedicinesPage from "../pages/MedicinesPage";
+import HomePage from "../pages/HomePage";
 import { AuthContext } from "../auth/AuthContext";
 import PublicRoutes from "./PublicRoutes";
 import PrivateRoutes from "./PrivateRoutes";
@@ -35,7 +35,7 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/tickets" element={<Tickets />} />
+      <Route path="/" element={<HomePage />} />
       <Route path="/medicamentos" element={<MedicinesPage />} />
 
       {/* Unlogin Routes */}

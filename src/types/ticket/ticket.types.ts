@@ -18,6 +18,21 @@ export interface Ticket_ {
 }
 
 export interface WorkingTicket {
-  number: number;
-  handleAtModule: string;
+  id: number;
+  ticketType: string;
+  priority: boolean;
+  pendingTimeInSeconds: number | null;
+  processingTimeInSeconds: number | null;
+  headquarterId: number;
+  userId: number;
+  moduleId: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketsResponse {
+  tickets: WorkingTicket[];
+  countPendingTickets: number;
+  averagePendingTimeToAttendInSecond: number;
+  averageProcessingTimeModuleInSecod: number;
 }

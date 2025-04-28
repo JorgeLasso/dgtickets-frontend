@@ -4,6 +4,11 @@ import { items } from "../constants/MenuItems";
 
 export const getFilteredMenuItems = (auth: AuthState | null) => {
   return items.filter((item) => {
+    // Public Home
+    if (item.key === "/") {
+      return true;
+    }
+
     // Public Routes
     if (item.key === "/tickets") {
       return true;
@@ -12,11 +17,11 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
     if (item.key === "/medicamentos") {
       return true;
     }
-    
+
     if (!auth || !auth.isLoggedIn) {
       return item.key === "/login" || item.key === "/registro";
     }
-    
+
     const userRole = auth.role;
 
     // User Routes

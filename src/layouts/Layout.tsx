@@ -2,8 +2,8 @@ import React from "react";
 import { Layout as AntLayout, theme } from "antd";
 import { ThemeAppearance } from "antd-style";
 import Header from "../components/Header";
-import { items } from "../constants/MenuItems";
 import AppRoutes from "../routes/AppRoutes";
+import HeadquarterInfo from "../components/HeadquarterInfo";
 
 const { Content, Footer } = AntLayout;
 
@@ -19,9 +19,10 @@ const Layout: React.FC<LayoutProps> = ({ appearance, setTheme }) => {
 
   return (
     <AntLayout style={{ minHeight: "100vh" }}>
-      <Header appearance={appearance} setTheme={setTheme} items={items} />
+      <Header appearance={appearance} setTheme={setTheme} />
       <Content style={{ padding: "0 48px" }}>
         <div style={{ padding: 10 }} />
+        <HeadquarterInfo />
         <div
           style={{
             background: colorBgContainer,

@@ -9,7 +9,7 @@ import {
 import useHideMenu from "../hooks/useHideMenu";
 import useNotification from "../hooks/useNotification";
 import useFetch from "../hooks/useFetch";
-import useHeadquarters from "../hooks/useHeadquarters";
+import { HeadquarterContext } from "../context/HeadquarterContext";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import GenericFormModal from "../components/GenericFormModal";
 import {
@@ -26,10 +26,8 @@ const MedicinesPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const { headquarters } = useHeadquarters();
-  const [selectedHeadquarter, setSelectedHeadquarter] = useState<number | null>(
-    null
-  );
+  const { headquarters, selectedHeadquarter, setSelectedHeadquarter } =
+    useContext(HeadquarterContext)!;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<MedicineStock | null>(
@@ -79,13 +77,12 @@ const MedicinesPage: React.FC = () => {
     fetchMedicines(currentPage);
   }, [currentPage, fetchMedicines]);
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
   const handleHeadquarterChange = (id: number | undefined) => {
     setSelectedHeadquarter(id ?? null);
     setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   const handleEditMedicine = (medicine: MedicineStock) => {
