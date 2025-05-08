@@ -6,9 +6,7 @@ interface PublicRoutesProps {
   redirectPath?: string;
 }
 
-const PublicRoutes: React.FC<PublicRoutesProps> = ({
-  redirectPath = "/tickets",
-}) => {
+const PublicRoutes: React.FC<PublicRoutesProps> = ({ redirectPath = "/" }) => {
   const authContext = useContext(AuthContext);
 
   if (!authContext) {

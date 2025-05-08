@@ -1,3 +1,5 @@
+import { Ticket } from "../ticket/ticket.types";
+
 export interface Module {
   id: number;
   name: string;
@@ -7,6 +9,7 @@ export interface Module {
   createdAt: string;
   updatedAt: string;
   user?: { firstName: string; lastName: string } | null;
+  tickets?: Ticket[];
 }
 
 export interface ModulesResponse {

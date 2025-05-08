@@ -1,6 +1,6 @@
-import useTickets from "./useTickets";
+import usePendingTickets from "./usePendingTickets";
 
-interface TicketGroupConfig {
+interface PendingTicketGroupConfig {
   key: "priority" | "row";
   title: string;
   tagColor: string;
@@ -8,49 +8,49 @@ interface TicketGroupConfig {
   emptyText: string;
 }
 
-export interface TicketGroupData extends TicketGroupConfig {
-  tickets: ReturnType<typeof useTickets>["tickets"];
+export interface PendingTicketGroupData extends PendingTicketGroupConfig {
+  tickets: ReturnType<typeof usePendingTickets>["tickets"];
   isLoading: boolean;
   avgPending: number;
   avgProcessing: number;
   count: number;
 }
 
-const ticketGroupsConfig: TicketGroupConfig[] = [
+const pendingTicketGroupsConfig: PendingTicketGroupConfig[] = [
   {
     key: "priority",
-    title: "Tickets Prioritarios",
+    title: "Turnos Prioritarios",
     tagColor: "red",
     tagLabel: "Prioritario",
-    emptyText: "No hay Tickets prioritarios",
+    emptyText: "No hay Turnos prioritarios en cola",
   },
   {
     key: "row",
-    title: "Tickets Normales",
+    title: "Turnos Normales",
     tagColor: "blue",
     tagLabel: "Regular",
-    emptyText: "No hay Tickets",
+    emptyText: "No hay Turnos en cola",
   },
 ];
 
-export default function useTicketGroups(
+export default function usePendingTicketGroups(
   selectedHeadquarter: number
-): TicketGroupData[] {
-  const [priorityConfig, rowConfig] = ticketGroupsConfig;
+): PendingTicketGroupData[] {
+  const [priorityConfig, rowConfig] = pendingTicketGroupsConfig;
   const {
     tickets: ticketsPriority,
     isLoading: loadingPriority,
     avgPending: pendingPriority,
     avgProcessing: processingPriority,
     count: countPriority,
-  } = useTickets(priorityConfig.key, selectedHeadquarter);
+  } = usePendingTickets(priorityConfig.key, selectedHeadquarter);
   const {
     tickets: ticketsRow,
     isLoading: loadingRow,
     avgPending: pendingRow,
     avgProcessing: processingRow,
     count: countRow,
-  } = useTickets(rowConfig.key, selectedHeadquarter);
+  } = usePendingTickets(rowConfig.key, selectedHeadquarter);
 
   return [
     {

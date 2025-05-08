@@ -9,18 +9,20 @@ interface ModulesListProps {
 }
 
 const ModulesList: React.FC<ModulesListProps> = ({ modules, loading }) => {
-  const { Title, Text } = Typography;
-  // Only show modules that are active and have an assigned adviser
-  const filteredModules = modules.filter((m) => m.isActive && m.user);
+  const { Title } = Typography;
+
+  const filteredModules = modules.filter(
+    (module) => module.isActive && module.userId
+  );
 
   return (
     <>
       <Title level={3} style={{ textAlign: "center", marginBottom: 16 }}>
         Módulos de atención disponibles
       </Title>
-      <Text style={{ textAlign: "center", marginBottom: 16 }}>
+      <Title level={5} style={{ textAlign: "center", marginBottom: 16 }}>
         Total de módulos activos: {filteredModules.length}
-      </Text>
+      </Title>
 
       {filteredModules.length === 0 && !loading ? (
         <Empty description="No hay módulos disponibles" />

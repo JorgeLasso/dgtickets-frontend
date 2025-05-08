@@ -11,11 +11,15 @@ export const items = [
   },
   {
     key: "/crear",
-    label: <Link to="/crear">Crear Ticket</Link>,
+    label: <Link to="/crear">Solicitar turno</Link>,
   },
   {
-    key: "/asesor/ingresar",
-    label: <Link to="/asesor/ingresar">Asesor</Link>,
+    key: "/mis-tickets",
+    label: <Link to="/mis-tickets">Mis Tickets</Link>,
+  },
+  {
+    key: "/asesor",
+    label: <Link to="/asesor">Asesor</Link>,
   },
   {
     key: "/login",

@@ -4,7 +4,7 @@ import ModulesList from "../components/ModulesList";
 import useModules from "../hooks/useModules";
 import { HeadquarterContext } from "../context/HeadquarterContext";
 import GenericTicketsList from "../components/GenericTicketsList";
-import useTicketGroups from "../hooks/useTicketGroups";
+import useTicketGroups from "../hooks/usePendingTicketGroups";
 
 const HomePage: React.FC = () => {
   const { selectedHeadquarter, isLoading: hqLoading } =
@@ -15,6 +15,7 @@ const HomePage: React.FC = () => {
   const { modules, isLoading: modulesLoading } = useModules(
     selectedHeadquarter || 0
   );
+
   const loading = hqLoading || modulesLoading;
 
   const ticketsData = useTicketGroups(selectedHeadquarter || 0);
@@ -42,7 +43,7 @@ const HomePage: React.FC = () => {
             <Col xs={24} lg={12}>
               <ModulesList modules={modules} loading={loading} />
             </Col>
-            <Col xs={24} lg={12}>
+            <Col xs={24} lg={12} style={{ marginTop: 16 }}>
               <Row gutter={16}>
                 {ticketsData.map(
                   (

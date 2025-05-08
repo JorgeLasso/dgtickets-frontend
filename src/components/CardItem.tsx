@@ -7,7 +7,7 @@ export interface CardItemProps {
   loading?: boolean;
   title?: string;
   children?: ReactNode;
-  image?: string;
+  image?: string | null;
   properties?: ItemProperty[];
   actions?: ReactNode[];
 }
@@ -16,7 +16,7 @@ const CardItem: React.FC<CardItemProps> = ({
   loading = false,
   title = "Card title",
   children,
-  image = "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png",
+  image = null,
   properties,
   actions = [<EditOutlined key="edit" />],
 }) => (
@@ -26,7 +26,7 @@ const CardItem: React.FC<CardItemProps> = ({
     loading={loading}
     title={title}
     style={{ width: "100%", maxWidth: 300, margin: "0 auto" }}
-    cover={<img alt="img" src={image} height={170} />}
+    cover={image ? <img alt="img" src={image} height={170} /> : null}
     actions={actions}
   >
     {properties && properties.length > 0 ? (

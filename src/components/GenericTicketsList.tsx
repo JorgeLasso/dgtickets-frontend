@@ -1,10 +1,11 @@
 import React from "react";
-import { List, Spin, Typography, Tag, Row, Col, Divider, Flex } from "antd";
-import { WorkingTicket } from "../types/ticket/ticket.types";
+import { List, Tag, Row, Col, Card, Statistic } from "antd";
+import { Ticket } from "../types/ticket/ticket.types";
 import { formatTime } from "../helpers/formatTime";
+import { ClockCircleOutlined, TeamOutlined } from "@ant-design/icons";
 
 interface GenericTicketsListProps {
-  tickets: WorkingTicket[];
+  tickets: Ticket[];
   isLoading: boolean;
   avgPending: number;
   avgProcessing: number;
@@ -23,59 +24,80 @@ const GenericTicketsList: React.FC<GenericTicketsListProps> = ({
   count,
   title,
   tagColor,
-  tagLabel,
   emptyText,
 }) => {
   return (
     <>
       <Row>
         <Col span={24}>
-          <Divider style={{ fontSize: 18 }}> {title} </Divider>
-          <Col style={{ width: "100%" }} lg={12} sm={24}>
-            <Typography.Text>
-              Tiempo promedio de atención: {formatTime(avgPending)}
-            </Typography.Text>
-          </Col>
-          <Col>
-            <Typography.Text>
-              Tiempo promedio por ticket: {formatTime(avgProcessing)}
-            </Typography.Text>
-          </Col>
-          <Col>
-            <Typography.Text>Tickets en cola: {count}</Typography.Text>
-          </Col>
-          <Spin spinning={isLoading} tip="Cargando...">
+          <Card
+            title={
+              <div style={{ textAlign: "center" }}>
+                <Tag color={tagColor}>{title}</Tag>
+              </div>
+            }
+            variant="outlined"
+            style={{ marginBottom: 16 }}
+            loading={isLoading}
+          >
+            <Row>
+              <Col span={24} style={{ marginBottom: 12 }}>
+                <Statistic
+                  title="Tiempo promedio de atención"
+                  value={formatTime(avgPending)}
+                  prefix={<ClockCircleOutlined />}
+                  valueStyle={{ color: "#1890ff", fontSize: "16px" }}
+                />
+              </Col>
+              <Col span={24} style={{ marginBottom: 12 }}>
+                <Statistic
+                  title="Tiempo promedio por turno"
+                  value={formatTime(avgProcessing)}
+                  prefix={<ClockCircleOutlined />}
+                  valueStyle={{ color: "#52c41a", fontSize: "16px" }}
+                />
+              </Col>
+              <Col span={24} style={{ marginBottom: 12 }}>
+                <Statistic
+                  title="Turnos en cola"
+                  value={count}
+                  prefix={<TeamOutlined />}
+                  valueStyle={{ color: "#fa8c16", fontSize: "16px" }}
+                />
+              </Col>
+            </Row>
+
             <List
               style={{
-                maxHeight: 600,
+                maxHeight: 400,
                 overflowY: "auto",
-                maxWidth: 400,
-                margin: "auto",
+                scrollbarWidth: "thin",
+                margin: "16px auto 0",
               }}
               bordered
               dataSource={tickets}
               locale={{ emptyText }}
-              renderItem={(item) => (
+              renderItem={(item, index) => (
                 <List.Item>
                   <List.Item.Meta
-                    title={`Ticket No. ${item.id}`}
+                    title={
+                      <div style={{ textAlign: "center" }}>
+                        {index === 0 ? "Próximo en ser atendido" : null}
+                      </div>
+                    }
                     description={
-                      <Flex justify="flex-start">
-                        <div>
-                          <Tag color={tagColor}>{tagLabel}</Tag>
-                          <Tag color="green">Prioridad: {item.priority}</Tag>
+                      <>
+                        <div style={{ marginBottom: "4px" }}>
+                          <strong>Usuario: </strong>
+                          {item.user.firstName} {item.user.lastName}
                         </div>
-                        <div>
-                          <Tag color="blue">Módulo: {item.priority}</Tag>
-                          <Tag color="purple">{item.ticketType}</Tag>
-                        </div>
-                      </Flex>
+                      </>
                     }
                   />
                 </List.Item>
               )}
             />
-          </Spin>
+          </Card>
         </Col>
       </Row>
     </>

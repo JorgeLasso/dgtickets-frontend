@@ -2,7 +2,6 @@ import React, { useContext, useEffect } from "react";
 import { Route, Routes, Navigate } from "react-router";
 import CreateTicket from "../pages/CreateTicket";
 import AdviserPage from "../pages/AdviserPage";
-import ModulePage from "../pages/ModulePage";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import EmailValidated from "../pages/EmailValidated";
@@ -10,6 +9,8 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ChangePassword from "../pages/ChangePassword";
 import MedicinesPage from "../pages/MedicinesPage";
 import HomePage from "../pages/HomePage";
+import TicketDetailsPage from "../pages/TicketDetailsPage";
+import TicketHistoryPage from "../pages/TicketHistoryPage";
 import { AuthContext } from "../auth/AuthContext";
 import PublicRoutes from "./PublicRoutes";
 import PrivateRoutes from "./PrivateRoutes";
@@ -50,12 +51,13 @@ const AppRoutes: React.FC = () => {
       {/* User Routes */}
       <Route element={<PrivateRoutes allowedRoles={[ROLES.USER]} />}>
         <Route path="/crear" element={<CreateTicket />} />
+        <Route path="/ticket/:ticketId" element={<TicketDetailsPage />} />
+        <Route path="/mis-tickets" element={<TicketHistoryPage />} />
       </Route>
 
       {/* Adviser Routes */}
       <Route element={<PrivateRoutes allowedRoles={[ROLES.ADVISER]} />}>
-        <Route path="/asesor/ingresar" element={<AdviserPage />} />
-        <Route path="/asesor/modulo" element={<ModulePage />} />
+        <Route path="/asesor" element={<AdviserPage />} />
       </Route>
 
       {/* Admin Routes */}
@@ -67,7 +69,7 @@ const AppRoutes: React.FC = () => {
       ></Route>
 
       {/* Default Route */}
-      <Route path="*" element={<Navigate to="/tickets" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

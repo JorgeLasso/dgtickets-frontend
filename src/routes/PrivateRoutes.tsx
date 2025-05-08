@@ -30,7 +30,7 @@ const PrivateRoutes: React.FC<PrivateRoutesProps> = ({
   if (auth.role && allowedRoles.includes(auth.role)) {
     return <Outlet />;
   } else {
-    return <Navigate to="/tickets" replace />;
+    return <Navigate to="/" replace />;
   }
 };
 

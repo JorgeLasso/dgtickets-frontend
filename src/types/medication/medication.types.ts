@@ -7,7 +7,6 @@ export interface MedicineStock {
   unitOfMeasure: string;
   quantityPerUnit: number;
   isActive: boolean;
-  headquarterId: number;
 }
 
 export interface MedicineResponse {

@@ -1,89 +1,70 @@
-import React, { useEffect, useState, useCallback, useContext } from "react";
-import { Typography, Empty, Form, Button, Select } from "antd";
+import React, { useEffect, useState, useContext } from "react";
+import { Typography, Empty, Form, Button, Row, Col } from "antd";
 import CardList from "../components/CardList";
 import Pagination from "../components/Pagination";
-import {
-  MedicineResponse,
-  MedicineStock,
-} from "../types/medication/medication.types";
+import { MedicineStock } from "../types/medication/medication.types";
 import useHideMenu from "../hooks/useHideMenu";
-import useNotification from "../hooks/useNotification";
-import useFetch from "../hooks/useFetch";
-import { HeadquarterContext } from "../context/HeadquarterContext";
-import { PlusOutlined, EditOutlined } from "@ant-design/icons";
-import GenericFormModal from "../components/GenericFormModal";
 import {
-  medicinesFormFields,
-  headquarterFormField,
-} from "../constants/MedicinesFormFields";
+  PlusOutlined,
+  EditOutlined,
+  MedicineBoxOutlined,
+} from "@ant-design/icons";
+import GenericFormModal from "../components/GenericFormModal";
+import { medicinesFormFields } from "../constants/MedicinesFormFields";
 import { AuthContext } from "../auth/AuthContext";
+import { HeadquarterContext } from "../context/HeadquarterContext";
 import { ROLES } from "../constants/Roles";
+import useMedicines from "../hooks/useMedicines";
+import HeadquarterMedicinesModal from "../components/HeadquarterMedicinesModal";
 
 const { Title } = Typography;
 
 const MedicinesPage: React.FC = () => {
-  const [medicines, setMedicines] = useState<MedicineStock[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
-  const { headquarters, selectedHeadquarter, setSelectedHeadquarter } =
-    useContext(HeadquarterContext)!;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [
+    isMedicinesByHeadquarterModalOpen,
+    setIsMedicinesByHeadquarterModalOpen,
+  ] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<MedicineStock | null>(
     null
   );
   const [form] = Form.useForm<MedicineStock>();
   const [createForm] = Form.useForm<MedicineStock>();
-  const { openNotification } = useNotification();
-  const { isLoading: loading, get, put, post } = useFetch<MedicineResponse>();
 
-  // Determine user permissions
+  const {
+    medicines,
+    total,
+    pageSize,
+    currentPage,
+    isLoading: loading,
+    fetchMedicines,
+    updateMedicine,
+    createMedicine,
+    handlePageChange,
+  } = useMedicines();
+
   const authContext = useContext(AuthContext);
   if (!authContext)
     throw new Error("AuthContext must be used within AuthProvider");
   const { auth } = authContext;
+
+  const headquarterContext = useContext(HeadquarterContext);
+  if (!headquarterContext)
+    throw new Error(
+      "HeadquarterContext must be used within HeadquarterProvider"
+    );
+  const { selectedHeadquarter } = headquarterContext;
+
   const canEditOrAdd = auth.role
     ? [ROLES.ADVISER, ROLES.ADMIN].includes(auth.role)
     : false;
 
-  const medicineFormFields = [
-    ...medicinesFormFields,
-    headquarterFormField(headquarters),
-  ];
-
   useHideMenu(false);
 
-  const fetchMedicines = useCallback(
-    async (page: number) => {
-      try {
-        const query = `medicine-stocks?page=${page}&limit=${pageSize}${
-          selectedHeadquarter ? `&headquarterId=${selectedHeadquarter}` : ""
-        }`;
-        const data = await get(query);
-        if (data) {
-          setMedicines(data.medicineStocks);
-          setTotal(data.total);
-          setPageSize(data.limit);
-        }
-      } catch (error) {
-        console.error("Error fetching medicines:", error);
-      }
-    },
-    [pageSize, get, selectedHeadquarter]
-  );
-
   useEffect(() => {
-    fetchMedicines(currentPage);
-  }, [currentPage, fetchMedicines]);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-  const handleHeadquarterChange = (id: number | undefined) => {
-    setSelectedHeadquarter(id ?? null);
-    setCurrentPage(1);
-  };
+    fetchMedicines();
+  }, [fetchMedicines]);
 
   const handleEditMedicine = (medicine: MedicineStock) => {
     setEditingMedicine(medicine);
@@ -96,7 +77,6 @@ const MedicinesPage: React.FC = () => {
       quantityPerUnit: medicine.quantityPerUnit,
       image: medicine.image,
       isActive: medicine.isActive,
-      headquarterId: medicine.headquarterId,
     });
     setIsModalOpen(true);
   };
@@ -108,37 +88,14 @@ const MedicinesPage: React.FC = () => {
   };
 
   const handleUpdateMedicine = async (values: MedicineStock) => {
-    try {
-      if (!editingMedicine) return;
+    if (!editingMedicine) return;
 
-      const updatedMedicine = await put("medicine-stocks/", { ...values });
+    const success = await updateMedicine({ ...values });
 
-      if (updatedMedicine) {
-        setMedicines((prevMedicines) =>
-          prevMedicines.map((med) =>
-            med.id === editingMedicine.id ? { ...med, ...updatedMedicine } : med
-          )
-        );
-
-        openNotification(
-          "success",
-          "Medicamento actualizado",
-          "El medicamento ha sido actualizado correctamente"
-        );
-
-        setIsModalOpen(false);
-        setEditingMedicine(null);
-        form.resetFields();
-
-        fetchMedicines(currentPage);
-      }
-    } catch (error) {
-      console.error("Error updating medicine:", error);
-      openNotification(
-        "error",
-        "Error al actualizar",
-        "No se pudo actualizar el medicamento. Intente nuevamente."
-      );
+    if (success) {
+      setIsModalOpen(false);
+      setEditingMedicine(null);
+      form.resetFields();
     }
   };
 
@@ -153,27 +110,20 @@ const MedicinesPage: React.FC = () => {
   };
 
   const handleCreateMedicine = async (values: MedicineStock) => {
-    try {
-      const { ...payload } = values;
-      const newMedicine = await post("medicine-stocks/", payload);
-      if (newMedicine) {
-        openNotification(
-          "success",
-          "Medicamento creado",
-          "El medicamento ha sido creado correctamente"
-        );
-        setIsCreateModalOpen(false);
-        createForm.resetFields();
-        fetchMedicines(currentPage);
-      }
-    } catch (error) {
-      console.error("Error creando medicamento:", error);
-      openNotification(
-        "error",
-        "Error al crear",
-        "No se pudo crear el medicamento. Intente nuevamente."
-      );
+    const success = await createMedicine(values);
+
+    if (success) {
+      setIsCreateModalOpen(false);
+      createForm.resetFields();
     }
+  };
+
+  const handleOpenMedicinesByHeadquarterModal = () => {
+    setIsMedicinesByHeadquarterModalOpen(true);
+  };
+
+  const handleCloseMedicinesByHeadquarterModal = () => {
+    setIsMedicinesByHeadquarterModalOpen(false);
   };
 
   const renderMedicineCard = (medicine: MedicineStock) => {
@@ -200,36 +150,37 @@ const MedicinesPage: React.FC = () => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 16,
-        }}
+      <Row
+        gutter={[16, 16]}
+        className="button-container"
+        style={{ marginBottom: 16 }}
       >
-        <Select
-          allowClear
-          placeholder="Filtrar por sede"
-          style={{ width: 200 }}
-          value={selectedHeadquarter || undefined}
-          onChange={handleHeadquarterChange}
-        >
-          {headquarters.map((hq) => (
-            <Select.Option key={hq.id} value={hq.id}>
-              {hq.name}
-            </Select.Option>
-          ))}
-        </Select>
-        {canEditOrAdd && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleOpenCreateModal}
-          >
-            Agregar
-          </Button>
-        )}
-      </div>
+        <Col xs={24} sm={6}>
+          {selectedHeadquarter && canEditOrAdd && (
+            <Button
+              type="primary"
+              ghost
+              icon={<MedicineBoxOutlined />}
+              onClick={handleOpenMedicinesByHeadquarterModal}
+              style={{ width: "100%", maxWidth: "300px" }}
+            >
+              Ver medicamentos por sede
+            </Button>
+          )}
+        </Col>
+        <Col xs={24} sm={6}>
+          {canEditOrAdd && (
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleOpenCreateModal}
+              style={{ width: "100%", maxWidth: "300px" }}
+            >
+              Agregar Medicamentos
+            </Button>
+          )}
+        </Col>
+      </Row>
       <Title level={2} style={{ textAlign: "center", marginBottom: "30px" }}>
         Medicamentos Disponibles
       </Title>
@@ -258,7 +209,7 @@ const MedicinesPage: React.FC = () => {
         open={isModalOpen}
         onCancel={handleCancel}
         onSubmit={handleUpdateMedicine}
-        fields={medicineFormFields}
+        fields={medicinesFormFields}
         loading={loading}
         form={form}
         initialValues={editingMedicine || {}}
@@ -269,9 +220,14 @@ const MedicinesPage: React.FC = () => {
         open={isCreateModalOpen}
         onCancel={handleCancelCreate}
         onSubmit={handleCreateMedicine}
-        fields={medicineFormFields}
+        fields={medicinesFormFields}
         loading={loading}
         form={createForm}
+      />
+
+      <HeadquarterMedicinesModal
+        open={isMedicinesByHeadquarterModalOpen}
+        onCancel={handleCloseMedicinesByHeadquarterModal}
       />
     </div>
   );

@@ -1,23 +1,4 @@
 export interface Ticket {
-  id: string;
-  number: number;
-  createdAt: Date;
-  done: boolean;
-}
-
-export interface Ticket_ {
-  id: string;
-  code: string;
-  userId: string;
-  headquarterId: number;
-  priority: boolean;
-  moduleId: number;
-  orderDate: Date;
-  serviceDate: Date;
-  ticketType: string;
-}
-
-export interface WorkingTicket {
   id: number;
   ticketType: string;
   priority: boolean;
@@ -28,11 +9,26 @@ export interface WorkingTicket {
   moduleId: number | null;
   createdAt: string;
   updatedAt: string;
+  user: {
+    firstName: string;
+    lastName: string;
+  };
+  ticketMedicines?: Array<{
+    quantity: number;
+    medicine: {
+      name: string;
+    };
+  }>;
 }
 
 export interface TicketsResponse {
-  tickets: WorkingTicket[];
+  tickets: Ticket[];
   countPendingTickets: number;
   averagePendingTimeToAttendInSecond: number;
   averageProcessingTimeModuleInSecod: number;
+}
+
+export interface PositionData {
+  position: number;
+  estimatedTimeAtentionInSeconds: number;
 }

@@ -3,6 +3,11 @@
   margin: auto;
 }
 
+/* Añadiendo clase para centrar el título de la tarjeta */
+.container :global(.ant-card-head-title) {
+  text-align: center;
+}
+
 .content {
   display: flex;
   flex-direction: column;
@@ -10,17 +15,7 @@
   gap: 12px;
 }
 
-.activeTag {
-  font-size: 12px;
-  padding: 6px 16px;
-}
-
-.inactiveTag {
-  font-size: 12px;
-  padding: 6px 16px;
-}
-
-.adviserTag {
+.moduleTags {
   font-size: 12px;
   padding: 4px 8px;
   display: block;

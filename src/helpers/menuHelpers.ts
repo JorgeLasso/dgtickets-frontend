@@ -10,10 +10,6 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
     }
 
     // Public Routes
-    if (item.key === "/tickets") {
-      return true;
-    }
-
     if (item.key === "/medicamentos") {
       return true;
     }
@@ -25,12 +21,12 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
     const userRole = auth.role;
 
     // User Routes
-    if (item.key === "/crear") {
+    if (item.key === "/crear" || item.key === "/mis-tickets") {
       return userRole === ROLES.USER;
     }
 
     // Adviser Routes
-    if (item.key === "/asesor/ingresar") {
+    if (item.key === "/asesor") {
       return userRole === ROLES.ADVISER;
     }
 

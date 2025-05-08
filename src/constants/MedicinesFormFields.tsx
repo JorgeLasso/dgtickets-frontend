@@ -1,6 +1,5 @@
-import { Input, InputNumber, Checkbox, Select } from "antd";
+import { Input, InputNumber, Checkbox } from "antd";
 import { FormField } from "../types/forms/forms.types";
-import { Headquarter } from "../types/headquarters/headquarter.types";
 
 export const medicinesFormFields: FormField[] = [
   {
@@ -55,20 +54,3 @@ export const medicinesFormFields: FormField[] = [
     valuePropName: "checked",
   },
 ];
-
-export const headquarterFormField = (
-  headquarters: Headquarter[]
-): FormField => ({
-  name: "headquarterId",
-  label: "Sede",
-  component: (
-    <Select placeholder="Seleccione sede" style={{ width: "100%" }}>
-      {headquarters.map((hq) => (
-        <Select.Option key={hq.id} value={hq.id}>
-          {hq.name}
-        </Select.Option>
-      ))}
-    </Select>
-  ),
-  rules: [{ required: true, message: "Por favor seleccione la sede" }],
-});
