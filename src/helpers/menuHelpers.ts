@@ -48,6 +48,15 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
       return userRole === ROLES.ADMIN || userRole === ROLES.ADVISER;
     }
 
+    // Admin, Adviser and User Routes
+    if (item.key === "/pqrs") {
+      return (
+        userRole === ROLES.ADMIN ||
+        userRole === ROLES.ADVISER ||
+        userRole === ROLES.USER
+      );
+    }
+
     // Public Routes
     if (item.key === "/login" || item.key === "/registro") {
       return false;

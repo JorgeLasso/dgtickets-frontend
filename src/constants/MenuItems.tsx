@@ -18,6 +18,10 @@ export const items = [
     label: <Link to="/modulos">Gestionar Modulos</Link>,
   },
   {
+    key: "/pqrs",
+    label: <Link to="/pqrs">PQRs</Link>,
+  },
+  {
     key: "/sedes",
     label: <Link to="/sedes">Gestionar Sedes</Link>,
   },

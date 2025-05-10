@@ -11,6 +11,7 @@ import MedicinesPage from "../pages/MedicinesPage";
 import HomePage from "../pages/HomePage";
 import TicketDetailsPage from "../pages/TicketDetailsPage";
 import TicketHistoryPage from "../pages/TicketHistoryPage";
+import PQRsPage from "../pages/PQRsPage";
 import { AuthContext } from "../auth/AuthContext";
 import PublicRoutes from "./PublicRoutes";
 import PrivateRoutes from "./PrivateRoutes";
@@ -74,6 +75,13 @@ const AppRoutes: React.FC = () => {
       >
         <Route path="/medicamentos" element={<MedicinesPage />} />
         <Route path="/modulos" element={<ModulesPage />} />
+        <Route path="/pqrs" element={<PQRsPage />} />
+      </Route>
+      {/* Admin, Adviser and User Routes */}
+      <Route
+        element={<PrivateRoutes allowedRoles={[ROLES.ADMIN, ROLES.ADVISER]} />}
+      >
+        <Route path="/pqrs" element={<PQRsPage />} />
       </Route>
       {/* Default Route */}
       <Route path="*" element={<Navigate to="/" replace />} />
