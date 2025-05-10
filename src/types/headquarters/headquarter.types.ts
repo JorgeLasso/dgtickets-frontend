@@ -40,3 +40,14 @@ export interface HeadquarterMedicineDetail {
 export interface HeadquarterDetailResponse {
   headquarter: HeadquarterDetail;
 }
+
+export interface HeadquarterFormValues {
+  id?: number;
+  name: string;
+  address: string;
+  phoneNumber: string;
+  email: string;
+  isActive: boolean;
+  cityId: number;
+  stateId?: number;
+}

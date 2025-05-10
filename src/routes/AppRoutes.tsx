@@ -17,6 +17,8 @@ import PrivateRoutes from "./PrivateRoutes";
 import { ROLES } from "../constants/Roles";
 import MedicinesByHeadquarterPage from "../pages/MedicinesByHeadquarterPage";
 import ModulesPage from "../pages/ModulesPage";
+import HeadquarterPage from "../pages/HeadquarterPage";
+import UsersPage from "../pages/UsersPage";
 
 const AppRoutes: React.FC = () => {
   const authContext = useContext(AuthContext);
@@ -43,7 +45,6 @@ const AppRoutes: React.FC = () => {
         path="/medicamentos-sede"
         element={<MedicinesByHeadquarterPage />}
       />
-
       {/* Unlogin Routes */}
       <Route element={<PublicRoutes />}>
         <Route path="/login" element={<Login />} />
@@ -52,30 +53,28 @@ const AppRoutes: React.FC = () => {
         <Route path="/recuperar-contraseña" element={<ForgotPassword />} />
         <Route path="/auth/recovery-password" element={<ChangePassword />} />
       </Route>
-
       {/* User Routes */}
       <Route element={<PrivateRoutes allowedRoles={[ROLES.USER]} />}>
         <Route path="/crear" element={<CreateTicket />} />
         <Route path="/ticket/:ticketId" element={<TicketDetailsPage />} />
         <Route path="/mis-tickets" element={<TicketHistoryPage />} />
       </Route>
-
       {/* Adviser Routes */}
       <Route element={<PrivateRoutes allowedRoles={[ROLES.ADVISER]} />}>
         <Route path="/asesor" element={<AdviserPage />} />
-      </Route>
-
+      </Route>{" "}
       {/* Admin Routes */}
-      <Route element={<PrivateRoutes allowedRoles={[ROLES.ADMIN]} />}></Route>
-
-      {/* Admin and Adviser Routes */}
+      <Route element={<PrivateRoutes allowedRoles={[ROLES.ADMIN]} />}>
+        <Route path="/sedes" element={<HeadquarterPage />} />
+        <Route path="/usuarios" element={<UsersPage />} />
+      </Route>
+      {/* Admin and Adviser Routes */}{" "}
       <Route
         element={<PrivateRoutes allowedRoles={[ROLES.ADMIN, ROLES.ADVISER]} />}
       >
         <Route path="/medicamentos" element={<MedicinesPage />} />
         <Route path="/modulos" element={<ModulesPage />} />
       </Route>
-
       {/* Default Route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -15,11 +15,15 @@ export interface User {
   id: number;
   firstName: string;
   lastName: string;
-  userName: string;
-  email: string;
+  photo: string | null;
   userType: string;
+  email: string;
+  emailValidated: boolean;
+  password?: string;
   isActive: boolean;
   cityId: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UsersResponse {
@@ -27,6 +31,6 @@ export interface UsersResponse {
   page: number;
   limit: number;
   total: number;
-  next: number | null;
-  prev: number | null;
+  next: string | null;
+  prev: string | null;
 }

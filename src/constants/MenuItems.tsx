@@ -18,6 +18,14 @@ export const items = [
     label: <Link to="/modulos">Gestionar Modulos</Link>,
   },
   {
+    key: "/sedes",
+    label: <Link to="/sedes">Gestionar Sedes</Link>,
+  },
+  {
+    key: "/usuarios",
+    label: <Link to="/usuarios">Gestionar Usuarios</Link>,
+  },
+  {
     key: "/crear",
     label: <Link to="/crear">Solicitar turno</Link>,
   },

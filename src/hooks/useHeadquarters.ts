@@ -15,6 +15,26 @@ export interface UseHeadquartersResult {
   getMedicinesByHeadquarter: (
     id: number
   ) => Promise<HeadquarterMedicine[] | null>;
+  updateHeadquarterActiveStatus: (
+    id: number,
+    isActive: boolean
+  ) => Promise<boolean>;
+  updateHeadquarter: (
+    id: number,
+    headquarterData: Partial<HeadquarterDetail>
+  ) => Promise<boolean>;
+
+  /**
+   * Create a new headquarter
+   * @param headquarterData The headquarter data to create
+   * @returns Promise resolving to true if successful, false otherwise
+   */
+  createHeadquarter: (
+    headquarterData: Omit<
+      HeadquarterDetail,
+      "id" | "createdAt" | "updatedAt" | "headquarterMedicines"
+    >
+  ) => Promise<boolean>;
   isLoading: boolean;
   error: Error | null;
 }
@@ -24,12 +44,15 @@ const useHeadquarters = (): UseHeadquartersResult => {
   const [filteredHeadquarters, setFilteredHeadquarters] = useState<
     Headquarter[]
   >([]);
+
   const {
     get: getHeadquarters,
     isLoading,
     error,
   } = useFetch<{ headquarters: Headquarter[] }>();
   const { get: getHeadquarterDetail } = useFetch<HeadquarterDetailResponse>();
+  const { put: patchHeadquarter } = useFetch<HeadquarterDetail>();
+  const { post: postHeadquarter } = useFetch<HeadquarterDetail>();
 
   useEffect(() => {
     const load = async () => {
@@ -97,12 +120,109 @@ const useHeadquarters = (): UseHeadquartersResult => {
     [getHeadquarterDetail]
   );
 
+  /**
+   * Update headquarter active status
+   * @param id The ID of the headquarter to update
+   * @param isActive The new active status
+   * @returns Promise resolving to true if successful, false otherwise
+   */
+  const updateHeadquarterActiveStatus = useCallback(
+    async (id: number, isActive: boolean): Promise<boolean> => {
+      try {
+        await patchHeadquarter(`/headquarters/${id}`, { isActive });
+
+        // Update the local state
+        setHeadquarters((prevHeadquarters) =>
+          prevHeadquarters.map((hq) =>
+            hq.id === id ? { ...hq, isActive } : hq
+          )
+        );
+
+        return true;
+      } catch (err) {
+        console.error(`Error updating headquarter ${id} status:`, err);
+        return false;
+      }
+    },
+    [patchHeadquarter]
+  );
+
+  /**
+   * Update headquarter details
+   * @param id The ID of the headquarter to update
+   * @param headquarterData The updated headquarter data
+   * @returns Promise resolving to true if successful, false otherwise
+   */
+  const updateHeadquarter = useCallback(
+    async (
+      id: number,
+      headquarterData: Partial<HeadquarterDetail>
+    ): Promise<boolean> => {
+      try {
+        await patchHeadquarter(`/headquarters/${id}`, headquarterData);
+
+        // Update the local state
+        setHeadquarters((prevHeadquarters) =>
+          prevHeadquarters.map((hq) =>
+            hq.id === id
+              ? {
+                  ...hq,
+                  ...headquarterData,
+                }
+              : hq
+          )
+        );
+
+        return true;
+      } catch (err) {
+        console.error(`Error updating headquarter ${id}:`, err);
+        return false;
+      }
+    },
+    [patchHeadquarter]
+  );
+
+  /**
+   * Create a new headquarter
+   * @param headquarterData The headquarter data to create
+   * @returns Promise resolving to true if successful, false otherwise
+   */
+  const createHeadquarter = useCallback(
+    async (
+      headquarterData: Omit<
+        HeadquarterDetail,
+        "id" | "createdAt" | "updatedAt" | "headquarterMedicines"
+      >
+    ): Promise<boolean> => {
+      try {
+        const response = await postHeadquarter(
+          "/headquarters",
+          headquarterData
+        );
+
+        // Add the new headquarter to the local state
+        setHeadquarters((prevHeadquarters) => [
+          ...prevHeadquarters,
+          response as Headquarter,
+        ]);
+
+        return true;
+      } catch (err) {
+        console.error("Error creating headquarter:", err);
+        return false;
+      }
+    },
+    [postHeadquarter]
+  );
   return {
     headquarters,
     filteredHeadquarters,
     filterHeadquarterByCity,
     getHeadquarterById,
     getMedicinesByHeadquarter,
+    updateHeadquarterActiveStatus,
+    updateHeadquarter,
+    createHeadquarter,
     isLoading,
     error,
   };
