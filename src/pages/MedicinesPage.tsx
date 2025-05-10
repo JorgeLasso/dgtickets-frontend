@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Typography, Empty, Form, Button, Row, Col } from "antd";
+import { Typography, Empty, Form, Button, Row, Col, Spin, Alert } from "antd";
 import CardList from "../components/CardList";
 import Pagination from "../components/Pagination";
 import { MedicineStock } from "../types/medication/medication.types";
@@ -16,10 +16,12 @@ import { HeadquarterContext } from "../context/HeadquarterContext";
 import { ROLES } from "../constants/Roles";
 import useMedicines from "../hooks/useMedicines";
 import HeadquarterMedicinesModal from "../components/HeadquarterMedicinesModal";
+import GenericSearchBar from "../components/GenericSearchBar";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const MedicinesPage: React.FC = () => {
+  useHideMenu(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [
@@ -31,18 +33,21 @@ const MedicinesPage: React.FC = () => {
   );
   const [form] = Form.useForm<MedicineStock>();
   const [createForm] = Form.useForm<MedicineStock>();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pageSize] = useState(8);
 
   const {
     medicines,
-    total,
-    pageSize,
+    totalMedicines,
     currentPage,
-    isLoading: loading,
+    isLoading: isLoadingMedicines,
+    error,
     fetchMedicines,
     updateMedicine,
     createMedicine,
-    handlePageChange,
-  } = useMedicines();
+    setPage,
+    searchMedicines,
+  } = useMedicines({ limit: pageSize, page: 1 });
 
   const authContext = useContext(AuthContext);
   if (!authContext)
@@ -59,8 +64,6 @@ const MedicinesPage: React.FC = () => {
   const canEditOrAdd = auth.role
     ? [ROLES.ADVISER, ROLES.ADMIN].includes(auth.role)
     : false;
-
-  useHideMenu(false);
 
   useEffect(() => {
     fetchMedicines();
@@ -89,9 +92,7 @@ const MedicinesPage: React.FC = () => {
 
   const handleUpdateMedicine = async (values: MedicineStock) => {
     if (!editingMedicine) return;
-
     const success = await updateMedicine({ ...values });
-
     if (success) {
       setIsModalOpen(false);
       setEditingMedicine(null);
@@ -111,7 +112,6 @@ const MedicinesPage: React.FC = () => {
 
   const handleCreateMedicine = async (values: MedicineStock) => {
     const success = await createMedicine(values);
-
     if (success) {
       setIsCreateModalOpen(false);
       createForm.resetFields();
@@ -126,9 +126,18 @@ const MedicinesPage: React.FC = () => {
     setIsMedicinesByHeadquarterModalOpen(false);
   };
 
+  const handlePageChange = (page: number) => {
+    setPage(page);
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    searchMedicines(value);
+  };
+
   const renderMedicineCard = (medicine: MedicineStock) => {
     return {
-      loading,
+      loading: isLoadingMedicines,
       title: medicine.name,
       image: medicine.image,
       properties: [
@@ -148,33 +157,77 @@ const MedicinesPage: React.FC = () => {
     };
   };
 
+  if (isLoadingMedicines && medicines.length === 0) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "80vh",
+        }}
+      >
+        <Spin size="large" tip="Cargando medicamentos..." />
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "20px" }}>
       <Row
         gutter={[16, 16]}
-        className="button-container"
-        style={{ marginBottom: 16 }}
+        style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}
       >
-        <Col xs={24} sm={6}>
+        <Col
+          xs={24}
+          sm={16}
+          md={8}
+          style={{ display: "flex", justifyContent: "center" }}
+        >
+          <GenericSearchBar
+            value={searchTerm}
+            onChange={handleSearch}
+            placeholder="Nombre o fabricante"
+          />
+        </Col>
+      </Row>
+      <Row
+        gutter={[16, 16]}
+        style={{
+          marginBottom: 20,
+          display: "flex",
+          justifyContent: "flex-start",
+          alignItems: "flex-start",
+        }}
+      >
+        <Col
+          xs={24}
+          sm={8}
+          md={4}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+          }}
+        >
           {selectedHeadquarter && canEditOrAdd && (
             <Button
               type="primary"
               ghost
               icon={<MedicineBoxOutlined />}
               onClick={handleOpenMedicinesByHeadquarterModal}
-              style={{ width: "100%", maxWidth: "300px" }}
+              style={{
+                marginBottom: 8,
+              }}
             >
-              Ver medicamentos por sede
+              Medicamentos por sede
             </Button>
           )}
-        </Col>
-        <Col xs={24} sm={6}>
           {canEditOrAdd && (
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={handleOpenCreateModal}
-              style={{ width: "100%", maxWidth: "300px" }}
             >
               Agregar Medicamentos
             </Button>
@@ -182,49 +235,66 @@ const MedicinesPage: React.FC = () => {
         </Col>
       </Row>
       <Title level={2} style={{ textAlign: "center", marginBottom: "30px" }}>
-        Medicamentos Disponibles
+        Medicamentos
       </Title>
-
-      {medicines.length === 0 && !loading ? (
+      {error && (
+        <Alert
+          message="Error"
+          description={error}
+          type="error"
+          showIcon
+          style={{ marginBottom: "20px" }}
+        />
+      )}{" "}
+      {medicines.length === 0 && !isLoadingMedicines ? (
         <Empty description="No hay medicamentos disponibles" />
       ) : (
         <>
           <CardList
             data={medicines}
-            loading={loading}
+            loading={isLoadingMedicines}
             renderItem={renderMedicineCard}
           />
-          <Pagination
-            current={currentPage}
-            total={total}
-            pageSize={pageSize}
-            onChange={handlePageChange}
-            showSizeChanger={false}
-          />
+          <div style={{ marginTop: "20px" }}>
+            <Pagination
+              current={currentPage}
+              total={totalMedicines}
+              pageSize={pageSize}
+              onChange={handlePageChange}
+              showSizeChanger={false}
+            />
+            <Text
+              style={{
+                display: "block",
+                marginTop: "10px",
+                textAlign: "right",
+              }}
+            >
+              {" "}
+              Mostrando {medicines.length} de {totalMedicines} medicamentos
+            </Text>
+          </div>
         </>
       )}
-
       <GenericFormModal<MedicineStock>
         title="Editar Medicamento"
         open={isModalOpen}
         onCancel={handleCancel}
         onSubmit={handleUpdateMedicine}
         fields={medicinesFormFields}
-        loading={loading}
+        loading={isLoadingMedicines}
         form={form}
         initialValues={editingMedicine || {}}
       />
-
       <GenericFormModal<MedicineStock>
         title="Nuevo Medicamento"
         open={isCreateModalOpen}
         onCancel={handleCancelCreate}
         onSubmit={handleCreateMedicine}
         fields={medicinesFormFields}
-        loading={loading}
+        loading={isLoadingMedicines}
         form={createForm}
       />
-
       <HeadquarterMedicinesModal
         open={isMedicinesByHeadquarterModalOpen}
         onCancel={handleCloseMedicinesByHeadquarterModal}

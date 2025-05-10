@@ -165,7 +165,9 @@ const AdviserPage = () => {
         openNotification(
           "success",
           "Ticket actualizado",
-          `Estado del ticket actualizado a ${newStatus}`
+          `Estado del ticket actualizado a ${
+            TYPES[newStatus as keyof typeof TYPES]
+          }`
         );
       } catch (error) {
         console.error("Error al actualizar el estado del ticket:", error);

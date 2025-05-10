@@ -15,6 +15,8 @@ import { AuthContext } from "../auth/AuthContext";
 import PublicRoutes from "./PublicRoutes";
 import PrivateRoutes from "./PrivateRoutes";
 import { ROLES } from "../constants/Roles";
+import MedicinesByHeadquarterPage from "../pages/MedicinesByHeadquarterPage";
+import ModulesPage from "../pages/ModulesPage";
 
 const AppRoutes: React.FC = () => {
   const authContext = useContext(AuthContext);
@@ -37,7 +39,10 @@ const AppRoutes: React.FC = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<HomePage />} />
-      <Route path="/medicamentos" element={<MedicinesPage />} />
+      <Route
+        path="/medicamentos-sede"
+        element={<MedicinesByHeadquarterPage />}
+      />
 
       {/* Unlogin Routes */}
       <Route element={<PublicRoutes />}>
@@ -66,7 +71,10 @@ const AppRoutes: React.FC = () => {
       {/* Admin and Adviser Routes */}
       <Route
         element={<PrivateRoutes allowedRoles={[ROLES.ADMIN, ROLES.ADVISER]} />}
-      ></Route>
+      >
+        <Route path="/medicamentos" element={<MedicinesPage />} />
+        <Route path="/modulos" element={<ModulesPage />} />
+      </Route>
 
       {/* Default Route */}
       <Route path="*" element={<Navigate to="/" replace />} />

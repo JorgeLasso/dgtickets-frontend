@@ -1,5 +1,6 @@
 import { Input, InputNumber, Checkbox } from "antd";
 import { FormField } from "../types/forms/forms.types";
+import FileUploader from "../components/FileUploader";
 
 export const medicinesFormFields: FormField[] = [
   {
@@ -44,8 +45,9 @@ export const medicinesFormFields: FormField[] = [
   },
   {
     name: "image",
-    label: "URL de la Imagen",
-    component: <Input />,
+    label: "Imagen",
+    component: <FileUploader />,
+    rules: [{ required: false, message: "Por favor seleccione una imagen" }],
   },
   {
     name: "isActive",

@@ -19,6 +19,14 @@ export interface Ticket {
       name: string;
     };
   }>;
+  rating?: {
+    id?: number;
+    value: number;
+    description: string;
+    ticketId: number;
+    createdAt?: string;
+    updatedAt?: string;
+  };
 }
 
 export interface TicketsResponse {
@@ -31,4 +39,13 @@ export interface TicketsResponse {
 export interface PositionData {
   position: number;
   estimatedTimeAtentionInSeconds: number;
+}
+
+export type PriorityType = "regular" | "elderly" | "pregnant" | "disability";
+
+export interface PriorityOption {
+  value: PriorityType;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
 }

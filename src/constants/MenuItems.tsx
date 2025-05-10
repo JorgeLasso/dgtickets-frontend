@@ -7,7 +7,15 @@ export const items = [
   },
   {
     key: "/medicamentos",
-    label: <Link to="/medicamentos">Medicamentos</Link>,
+    label: <Link to="/medicamentos">Gestionar Medicamentos</Link>,
+  },
+  {
+    key: "/medicamentos-sede",
+    label: <Link to="/medicamentos-sede">Ver Medicamentos</Link>,
+  },
+  {
+    key: "/modulos",
+    label: <Link to="/modulos">Gestionar Modulos</Link>,
   },
   {
     key: "/crear",

@@ -24,3 +24,7 @@ export interface ModulesResponse {
 export interface ModulesByHeadquarterResponse {
   module: Module[];
 }
+
+export interface ModuleResponse {
+  module: Module;
+}

@@ -10,7 +10,7 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
     }
 
     // Public Routes
-    if (item.key === "/medicamentos") {
+    if (item.key === "/medicamentos-sede") {
       return true;
     }
 
@@ -33,6 +33,13 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
     // Admin Routes
 
     // Admin and Adviser Routes
+    if (item.key === "/medicamentos") {
+      return userRole === ROLES.ADMIN || userRole === ROLES.ADVISER;
+    }
+
+    if (item.key === "/modulos") {
+      return userRole === ROLES.ADMIN || userRole === ROLES.ADVISER;
+    }
 
     // Public Routes
     if (item.key === "/login" || item.key === "/registro") {

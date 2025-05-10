@@ -4,6 +4,7 @@ import {
   Headquarter,
   HeadquarterDetail,
   HeadquarterDetailResponse,
+  HeadquarterMedicine,
 } from "../types/headquarters/headquarter.types";
 
 export interface UseHeadquartersResult {
@@ -11,6 +12,9 @@ export interface UseHeadquartersResult {
   filteredHeadquarters: Headquarter[];
   filterHeadquarterByCity: (cityId: number | null) => void;
   getHeadquarterById: (id: number) => Promise<HeadquarterDetail | null>;
+  getMedicinesByHeadquarter: (
+    id: number
+  ) => Promise<HeadquarterMedicine[] | null>;
   isLoading: boolean;
   error: Error | null;
 }
@@ -75,11 +79,30 @@ const useHeadquarters = (): UseHeadquartersResult => {
     [getHeadquarterDetail]
   );
 
+  /**
+   * Get medicines by headquarter ID
+   * @param id The ID of the headquarter
+   * @returns Promise with headquarterMedicines array or null if error
+   */
+  const getMedicinesByHeadquarter = useCallback(
+    async (id: number): Promise<HeadquarterMedicine[] | null> => {
+      try {
+        const response = await getHeadquarterDetail(`/headquarters/${id}`);
+        return response.headquarter.headquarterMedicines || [];
+      } catch (err) {
+        console.error(`Error fetching medicines for headquarter ${id}:`, err);
+        return null;
+      }
+    },
+    [getHeadquarterDetail]
+  );
+
   return {
     headquarters,
     filteredHeadquarters,
     filterHeadquarterByCity,
     getHeadquarterById,
+    getMedicinesByHeadquarter,
     isLoading,
     error,
   };

@@ -1,40 +1,79 @@
-import { useState, useCallback } from "react";
-import {
-  MedicineResponse,
-  MedicineStock,
-} from "../types/medication/medication.types";
+import { useState, useCallback, useEffect } from "react";
+import { MedicineStock } from "../types/medication/medication.types";
 import useFetch from "./useFetch";
 import useNotification from "./useNotification";
+import {
+  PaginatedResponse,
+  PaginationOptions,
+} from "../types/pagination/pagination.types";
+
+interface MedicinesApiResponse
+  extends Omit<PaginatedResponse<MedicineStock>, "items"> {
+  medicineStocks: MedicineStock[];
+}
 
 /**
  * Custom hook for managing medicines operations
+ * @param options Pagination options
  * @returns Object with medicines state and operations
  */
-const useMedicines = () => {
+const useMedicines = (options: PaginationOptions = {}) => {
   const [medicines, setMedicines] = useState<MedicineStock[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
-  const { isLoading, get, put, post } = useFetch<MedicineResponse>();
+  const [totalMedicines, setTotalMedicines] = useState(0);
+  const [currentPage, setCurrentPage] = useState(options.page || 1);
+  const [limit] = useState(options.limit || 8);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const { isLoading, get, put, post } = useFetch<MedicinesApiResponse>();
   const { openNotification } = useNotification();
 
   /**
    * Fetch medicines from the API
    * @param page Current page number
+   * @param append Whether to append new data to existing data
+   * @param search Search term to filter medicines
    */
   const fetchMedicines = useCallback(
-    async (page: number = currentPage) => {
+    async (
+      page: number = currentPage,
+      append: boolean = false,
+      search: string = searchTerm
+    ) => {
       try {
-        const query = `medicine-stocks?page=${page}&limit=${pageSize}`;
-        const data = await get(query);
-        if (data) {
-          setMedicines(data.medicineStocks);
-          setTotal(data.total);
-          setPageSize(data.limit);
+        setError(null);
+        let query = `medicine-stocks?page=${page}&limit=${limit}`;
+        if (search) {
+          query += `&search=${encodeURIComponent(search)}`;
         }
-        return data;
+
+        const response = await get(query);
+
+        if (response && response.medicineStocks) {
+          setMedicines((prevMedicines) =>
+            append
+              ? [...prevMedicines, ...response.medicineStocks]
+              : response.medicineStocks
+          );
+          setTotalMedicines(response.total);
+          setHasNextPage(!!response.next);
+          return response;
+        } else {
+          setError("No se pudo obtener la información de medicamentos.");
+          openNotification(
+            "error",
+            "Error al cargar medicamentos",
+            "No se pudieron cargar los medicamentos. Intente nuevamente."
+          );
+        }
+        return null;
       } catch (error) {
         console.error("Error fetching medicines:", error);
+        setError(
+          "Error al cargar medicamentos. Por favor, intenta nuevamente."
+        );
         openNotification(
           "error",
           "Error al cargar medicamentos",
@@ -43,7 +82,24 @@ const useMedicines = () => {
         return null;
       }
     },
-    [pageSize, get, currentPage, openNotification]
+    [limit, get, currentPage, openNotification, searchTerm]
+  );
+
+  useEffect(() => {
+    fetchMedicines(currentPage);
+  }, [fetchMedicines, currentPage]);
+
+  /**
+   * Search medicines with specified term
+   * @param term Search term
+   */
+  const searchMedicines = useCallback(
+    (term: string) => {
+      setSearchTerm(term);
+      setCurrentPage(1); // Reset to first page when searching
+      fetchMedicines(1, false, term);
+    },
+    [fetchMedicines]
   );
 
   /**
@@ -120,10 +176,23 @@ const useMedicines = () => {
   );
 
   /**
-   * Change the current page
-   * @param page New page number
+   * Load more medicines when scrolling or clicking "load more"
    */
-  const handlePageChange = useCallback(
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isLoadingMore) {
+      setIsLoadingMore(true);
+      fetchMedicines(currentPage + 1, true).finally(() => {
+        setCurrentPage((prevPage) => prevPage + 1);
+        setIsLoadingMore(false);
+      });
+    }
+  }, [fetchMedicines, currentPage, hasNextPage, isLoadingMore]);
+
+  /**
+   * Set a specific page
+   * @param page Page number to set
+   */
+  const setPage = useCallback(
     (page: number) => {
       setCurrentPage(page);
       fetchMedicines(page);
@@ -133,14 +202,18 @@ const useMedicines = () => {
 
   return {
     medicines,
-    total,
-    pageSize,
+    totalMedicines,
     currentPage,
-    isLoading,
+    totalPages: Math.ceil(totalMedicines / limit),
+    error,
+    isLoading: isLoading || isLoadingMore,
     fetchMedicines,
     updateMedicine,
     createMedicine,
-    handlePageChange,
+    loadMore,
+    setPage,
+    searchMedicines,
+    searchTerm,
   };
 };
 

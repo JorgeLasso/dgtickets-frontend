@@ -1,94 +1,34 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext } from "react";
 import { Card, Typography, Row, Col, Spin, Tag } from "antd";
-import { useParams, useNavigate } from "react-router";
+import { useParams } from "react-router";
+import { MedicineBoxOutlined } from "@ant-design/icons";
 import { AuthContext } from "../auth/AuthContext";
 import { HeadquarterContext } from "../context/HeadquarterContext";
-import useFetch from "../hooks/useFetch";
 import { formatTime } from "../helpers/formatTime";
-import { Ticket, PositionData } from "../types/ticket/ticket.types";
 import useHideMenu from "../hooks/useHideMenu";
-import { connectToWebSockets } from "../services/WebSocketService";
 import useHeadquarters from "../hooks/useHeadquarters";
 import useCities from "../hooks/useCities";
+import { TYPES } from "../constants/TicketType";
+import useTicketDetails from "../hooks/useTicketDetails";
+import useTicketPosition from "../hooks/useTicketPosition";
+import Rating from "../components/Rating";
 
 const { Title, Text } = Typography;
 
 const TicketDetailsPage: React.FC = () => {
   useHideMenu(false);
   const { ticketId } = useParams<{ ticketId: string }>();
-  const navigate = useNavigate();
   const { auth } = useContext(AuthContext)!;
   const { selectedHeadquarter } = useContext(HeadquarterContext)!;
-  const { get, isLoading: isLoadingTicket } = useFetch<{ ticket: Ticket }>();
-  const { get: getPositionData, isLoading: isLoadingPosition } =
-    useFetch<PositionData>();
+  const { ticket, isLoading: isLoadingTicket } = useTicketDetails(ticketId);
+  const { positionData, isLoading: isLoadingPosition } =
+    useTicketPosition(ticketId);
   const { headquarters, isLoading: loadingHeadquarters } = useHeadquarters();
   const { cities, isLoading: loadingCities } = useCities();
-
-  const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [positionData, setPositionData] = useState<PositionData | null>(null);
-  const [currentTicket, setCurrentTicket] = useState<number | null>(null);
 
   const headquarter = headquarters.find((hq) => hq.id === selectedHeadquarter);
   const city =
     headquarter && cities.find((city) => city.id === headquarter.cityId);
-
-  useEffect(() => {
-    if (!ticketId) {
-      navigate("/crear");
-      return;
-    }
-
-    const getTicketDetails = async () => {
-      try {
-        const data = await get(`/tickets_/${ticketId}`);
-        setTicket(data.ticket);
-      } catch (error) {
-        console.log(error);
-        navigate("/crear");
-      }
-    };
-
-    const getPosition = async () => {
-      try {
-        const data = await getPositionData(`/tickets_/position/${ticketId}`);
-        setPositionData(data);
-
-        setCurrentTicket(parseInt(ticketId) - data.position);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    getTicketDetails();
-    getPosition();
-  }, [get, getPositionData, ticketId, navigate]);
-
-  useEffect(() => {
-    const socket = connectToWebSockets();
-
-    socket.onmessage = (event) => {
-      const { type, payload } = JSON.parse(event.data);
-      if (
-        type !== "on-ticket-changed" &&
-        type !== "on-last-ticket-number-changed"
-      )
-        return;
-
-      if (payload.positionData) {
-        setPositionData(payload.positionData);
-      }
-
-      if (payload.currentTicket) {
-        setCurrentTicket(payload.currentTicket);
-      }
-    };
-
-    return () => {
-      socket.close();
-    };
-  }, []);
-
   const isLoading =
     isLoadingTicket ||
     isLoadingPosition ||
@@ -102,11 +42,11 @@ const TicketDetailsPage: React.FC = () => {
       </Row>
     );
   }
-
-  if (!ticket || !positionData) {
+  if (!ticket) {
     return (
       <Card>
         <Title level={3}>No se encontraron detalles del turno</Title>
+        <Text>La información del turno no está disponible.</Text>
       </Card>
     );
   }
@@ -132,7 +72,6 @@ const TicketDetailsPage: React.FC = () => {
             </Text>
           </Card>
         </Col>
-
         <Col xs={24} md={12}>
           <Card type="inner" title={"Información del turno"}>
             <Row gutter={[16, 16]}>
@@ -156,44 +95,120 @@ const TicketDetailsPage: React.FC = () => {
               </Col>
               <Col xs={24} sm={12}>
                 <Text strong>Sede: </Text>
-                <Text>{headquarter?.name || "No disponible"}</Text>
+                <Text>{headquarter?.name || "No disponible"}</Text>{" "}
               </Col>
               <Col xs={24} sm={12}>
                 <Text strong>Tipo: </Text>
-                <Text>{ticket.ticketType || "No disponible"}</Text>
+                <Text>
+                  {TYPES[ticket.ticketType as keyof typeof TYPES] ||
+                    "No disponible"}
+                </Text>
               </Col>
               <Col xs={24} sm={12}>
                 <Text strong>Fecha de creación: </Text>
                 <Text>{new Date(ticket.createdAt).toLocaleString()}</Text>
               </Col>
+              {ticket.ticketType === "COMPLETED" && (
+                <>
+                  <Col xs={24} sm={12}>
+                    <Text strong>Fecha de atención: </Text>
+                    <Text>{new Date(ticket.updatedAt).toLocaleString()}</Text>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Text strong>Tiempo total de atención: </Text>
+                    <Text>
+                      {formatTime(
+                        Math.floor(
+                          (new Date(ticket.updatedAt).getTime() -
+                            new Date(ticket.createdAt).getTime()) /
+                            1000
+                        )
+                      )}
+                    </Text>
+                  </Col>
+                </>
+              )}
             </Row>
           </Card>
-        </Col>
-
-        <Col xs={24}>
-          <Card type="inner" title="Estado de la atención">
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12}>
-                <Text strong>Turno actual en atención: </Text>
-                <Tag color="processing" style={{ fontSize: "18px" }}>
-                  {currentTicket || "N/A"}
-                </Tag>
-              </Col>
-              <Col xs={24} sm={12}>
-                <Text strong>Su posición en la cola: </Text>
-                <Tag color="warning" style={{ fontSize: "18px" }}>
-                  {positionData.position}
-                </Tag>
-              </Col>
-              <Col span={24}>
-                <Text strong>Tiempo estimado de espera: </Text>
-                <Text style={{ fontSize: "18px" }}>
-                  {formatTime(positionData.estimatedTimeAtentionInSeconds)}
-                </Text>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
+        </Col>{" "}
+        {ticket.ticketType === "PENDING" && (
+          <Col xs={24}>
+            <Card type="inner" title="Estado de la atención">
+              {positionData ? (
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={12}>
+                    <Text strong>Su posición en la cola: </Text>
+                    <Tag color="warning" style={{ fontSize: "18px" }}>
+                      {positionData.position}
+                    </Tag>
+                  </Col>
+                  <Col span={24}>
+                    <Text strong>Tiempo estimado de espera: </Text>
+                    <Text style={{ fontSize: "18px" }}>
+                      {formatTime(positionData.estimatedTimeAtentionInSeconds)}
+                    </Text>
+                  </Col>
+                </Row>
+              ) : (
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <Text>
+                      La información de posición en la cola no está disponible
+                      en este momento.
+                    </Text>
+                  </Col>
+                </Row>
+              )}
+            </Card>
+          </Col>
+        )}
+        {ticket.ticketMedicines && ticket.ticketMedicines.length > 0 && (
+          <Col xs={24}>
+            <Card type="inner" title="Medicamentos Entregados">
+              <Row gutter={[16, 16]}>
+                {ticket.ticketMedicines.map((med, index) => (
+                  <Col xs={24} sm={12} key={index}>
+                    <Card size="small" style={{ background: "#f0f8ff" }}>
+                      <Row gutter={[8, 8]}>
+                        <Col span={24}>
+                          <MedicineBoxOutlined
+                            style={{ color: "#1890ff", marginRight: 8 }}
+                          />
+                          <Text strong>Nombre: </Text>
+                          <Text>{med.medicine.name}</Text>
+                        </Col>
+                        <Col span={24}>
+                          <Text strong>Cantidad: </Text>
+                          <Text>{med.quantity}</Text>
+                        </Col>
+                      </Row>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            </Card>
+          </Col>
+        )}
+        {ticket.ticketType !== "PENDING" &&
+          (!ticket.ticketMedicines || ticket.ticketMedicines.length === 0) && (
+            <Col xs={24}>
+              <Card type="inner" title="Medicamentos Asignados">
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <Text>No se han entregado medicamentos en este turno.</Text>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+          )}{" "}
+        {ticket.ticketType === "COMPLETED" && (
+          <Col xs={24}>
+            <Rating
+              ticketId={ticket.id}
+              initialRating={ticket.rating || null}
+            />
+          </Col>
+        )}
       </Row>
     </>
   );

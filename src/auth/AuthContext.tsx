@@ -35,6 +35,17 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (!payload.exp) return true;
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp < now;
+  } catch {
+    return true;
+  }
+}
+
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [auth, setAuth] = useState<AuthState>(initialState);
   const { openNotification } = useNotification();
@@ -113,6 +124,20 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       return;
     }
+    if (isTokenExpired(token)) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setAuth({
+        ...initialState,
+        checking: false,
+      });
+      openNotification(
+        "warning",
+        "Sesión expirada",
+        "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+      );
+      return;
+    }
 
     try {
       const userString = localStorage.getItem("user");
@@ -131,7 +156,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error("Error al validar token localmente:", error);
       logout();
     }
-  }, []);
+  }, [openNotification]);
 
   useEffect(() => {
     checkToken();
