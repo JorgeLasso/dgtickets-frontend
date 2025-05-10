@@ -36,8 +36,9 @@ const UsersFormModal: React.FC<UsersFormModalProps> = ({
     form.resetFields();
     onCancel();
   };
-
   const getUserFormFields = (): FormField[] => {
+    const isCreating = !initialValues;
+
     return [
       {
         name: "firstName",
@@ -59,6 +60,22 @@ const UsersFormModal: React.FC<UsersFormModalProps> = ({
           { required: true, message: "Por favor ingrese el email" },
           { type: "email", message: "Por favor ingrese un email válido" },
         ],
+      },
+      {
+        name: "password",
+        label: "Contraseña",
+        component: <Input.Password />,
+        rules: [
+          { required: isCreating, message: "Por favor ingrese la contraseña" },
+          {
+            min: 6,
+            message: "La contraseña debe tener al menos 6 caracteres",
+            warningOnly: !isCreating, // Only warn when editing, not creating
+          },
+        ],
+        tooltip: isCreating
+          ? "Contraseña del usuario (mínimo 6 caracteres)"
+          : "Deje en blanco para mantener la contraseña actual, o ingrese una nueva contraseña",
       },
       {
         name: "userType",

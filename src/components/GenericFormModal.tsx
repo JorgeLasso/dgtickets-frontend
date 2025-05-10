@@ -58,6 +58,7 @@ const GenericFormModal = <T,>({
         </Button>,
       ]}
     >
+      {" "}
       <Form form={form} initialValues={initialValues}>
         {fields.map((field) => (
           <Form.Item
@@ -67,6 +68,7 @@ const GenericFormModal = <T,>({
             rules={field.rules}
             hidden={field.hidden}
             valuePropName={field.valuePropName}
+            tooltip={field.tooltip}
           >
             {field.component}
           </Form.Item>

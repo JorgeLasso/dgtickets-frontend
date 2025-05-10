@@ -1,6 +1,5 @@
 import { Rule } from "antd/es/form";
 
-
 export interface FormField {
   name: string;
   label: string;
@@ -8,4 +7,5 @@ export interface FormField {
   rules?: Rule[];
   hidden?: boolean;
   valuePropName?: string;
+  tooltip?: string;
 }

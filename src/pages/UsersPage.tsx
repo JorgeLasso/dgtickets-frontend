@@ -10,8 +10,14 @@ import {
   Space,
   Row,
   Col,
+  Button,
 } from "antd";
-import { UserOutlined, FilterOutlined, EditOutlined } from "@ant-design/icons";
+import {
+  UserOutlined,
+  FilterOutlined,
+  EditOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 import useHideMenu from "../hooks/useHideMenu";
 import { User } from "../types/user/user.types";
 import useUsers from "../hooks/useUsers";
@@ -37,6 +43,7 @@ const UsersPage: React.FC = () => {
   const [pageSize] = useState(8);
   const [selectedUserType, setSelectedUserType] = useState<string | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const notificationContext = useContext(NotificationContext);
@@ -45,7 +52,6 @@ const UsersPage: React.FC = () => {
       "NotificationContext must be used within NotificationProvider"
     );
   const { openNotification } = notificationContext;
-
   const {
     users,
     totalUsers,
@@ -56,6 +62,7 @@ const UsersPage: React.FC = () => {
     setPage,
     filterUsers,
     updateUser,
+    createUser,
   } = useUsers({
     limit: pageSize,
     page: 1,
@@ -95,14 +102,23 @@ const UsersPage: React.FC = () => {
     if (!selectedUser) return false;
 
     try {
-      const success = await updateUser(selectedUser.id, {
+      // Don't update password if it's empty (unchanged)
+      const userData: Partial<Omit<User, "id">> = {
         firstName: values.firstName || "",
         lastName: values.lastName || "",
         email: values.email || "",
+        emailValidated: values.emailValidated ?? true,
         userType: values.userType || "",
         isActive: values.isActive ?? true,
         cityId: values.cityId || 0,
-      });
+      };
+
+      // Only include password if it was provided
+      if (values.password) {
+        userData.password = values.password;
+      }
+
+      const success = await updateUser(selectedUser.id, userData);
 
       if (success) {
         openNotification(
@@ -127,6 +143,48 @@ const UsersPage: React.FC = () => {
         "error",
         "Error al actualizar",
         "Ocurrió un error al intentar actualizar el usuario"
+      );
+      return false;
+    }
+  };
+
+  const handleSubmitCreateUser = async (values: Partial<User>) => {
+    try {
+      const success = await createUser({
+        firstName: values.firstName || "",
+        lastName: values.lastName || "",
+        email: values.email || "",
+        emailValidated: values.emailValidated ?? true,
+        password: values.password || "",
+        userType: values.userType || "",
+        isActive: values.isActive ?? true,
+        cityId: values.cityId || 0,
+      });
+
+      console.log("User creation success:", success);
+
+      if (success) {
+        openNotification(
+          "success",
+          "Usuario creado",
+          `El usuario ${values.firstName} ${values.lastName} ha sido creado exitosamente`
+        );
+        setIsCreateModalVisible(false);
+        return true;
+      } else {
+        openNotification(
+          "error",
+          "Error al crear",
+          "No se pudo crear el usuario, por favor intente nuevamente"
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+      openNotification(
+        "error",
+        "Error al crear",
+        "Ocurrió un error al intentar crear el usuario"
       );
       return false;
     }
@@ -192,18 +250,36 @@ const UsersPage: React.FC = () => {
 
   return (
     <>
+      {" "}
       <Card>
-        <Title level={3} style={{ textAlign: "center", marginBottom: "20px" }}>
-          <UserOutlined /> Gestión de Usuarios
-        </Title>
+        <Row
+          justify="space-between"
+          align="middle"
+          style={{ marginBottom: "20px" }}
+        >
+          <Col>
+            <Title level={3} style={{ margin: 0 }}>
+              <UserOutlined /> Gestión de Usuarios
+            </Title>
+          </Col>
+          <Col>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setIsCreateModalVisible(true)}
+            >
+              Agregar Usuario
+            </Button>
+          </Col>
+        </Row>
         <div style={{ marginBottom: "20px" }}>
           <Text>
             A continuación se muestra la lista de usuarios registrados en el
             sistema.
           </Text>
-        </div>
+        </div>{" "}
         <Row gutter={16} style={{ marginBottom: "20px" }}>
-          <Col xs={24} sm={12} md={8} lg={6}>
+          <Col xs={24} sm={24} md={24} lg={24}>
             <Space>
               <FilterOutlined />
               <Select
@@ -267,8 +343,7 @@ const UsersPage: React.FC = () => {
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         ) : null}{" "}
-      </Card>
-
+      </Card>{" "}
       {/* Edit User Modal */}
       <UsersFormModal
         title="Editar Usuario"
@@ -279,6 +354,18 @@ const UsersPage: React.FC = () => {
         }}
         onSubmit={handleSubmitEditUser}
         initialValues={selectedUser}
+        isLoading={isLoading}
+        cities={cities}
+      />
+      {/* Create User Modal */}
+      <UsersFormModal
+        title="Crear Usuario"
+        open={isCreateModalVisible}
+        onCancel={() => {
+          setIsCreateModalVisible(false);
+        }}
+        onSubmit={handleSubmitCreateUser}
+        initialValues={null}
         isLoading={isLoading}
         cities={cities}
       />

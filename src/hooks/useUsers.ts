@@ -12,7 +12,7 @@ interface UsersResponse extends Omit<PaginatedResponse<User>, "items"> {
 
 const useUsers = (options: PaginationOptions = {}) => {
   const [users, setUsers] = useState<User[]>([]);
-  const { get, put, isLoading } = useFetch<UsersResponse>();
+  const { get, put, post, isLoading } = useFetch<UsersResponse>();
   const [totalUsers, setTotalUsers] = useState(0);
   const [currentPage, setCurrentPage] = useState(options.page || 1);
   const [limit] = useState(options.limit || 8);
@@ -102,6 +102,24 @@ const useUsers = (options: PaginationOptions = {}) => {
     [currentPage, fetchUsers, put]
   );
 
+  const createUser = useCallback(
+    async (userData: Partial<Omit<User, "id">>) => {
+      try {
+        const response = await post("users", userData);
+
+        if (response && response.success) {
+          // Refresh user list after successful creation
+          await fetchUsers(currentPage);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error creating user:", error);
+        return false;
+      }
+    },
+    [currentPage, fetchUsers, post]
+  );
   return {
     users,
     totalUsers,
@@ -115,6 +133,7 @@ const useUsers = (options: PaginationOptions = {}) => {
     filterUsers,
     setSearchTerm,
     updateUser,
+    createUser,
   };
 };
 
