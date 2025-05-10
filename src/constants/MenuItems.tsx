@@ -30,6 +30,18 @@ export const items = [
     label: <Link to="/usuarios">Gestionar Usuarios</Link>,
   },
   {
+    key: "/ciudades",
+    label: <Link to="/ciudades">Gestionar Ciudades</Link>,
+  },
+  {
+    key: "/estados",
+    label: <Link to="/estados">Gestionar Estados</Link>,
+  },
+  {
+    key: "/paises",
+    label: <Link to="/paises">Gestionar Países</Link>,
+  },
+  {
     key: "/crear",
     label: <Link to="/crear">Solicitar turno</Link>,
   },

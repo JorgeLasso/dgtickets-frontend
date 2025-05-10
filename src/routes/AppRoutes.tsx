@@ -12,6 +12,9 @@ import HomePage from "../pages/HomePage";
 import TicketDetailsPage from "../pages/TicketDetailsPage";
 import TicketHistoryPage from "../pages/TicketHistoryPage";
 import PQRsPage from "../pages/PQRsPage";
+import CityPage from "../pages/CityPage";
+import StatePage from "../pages/StatePage";
+import CountryPage from "../pages/CountryPage";
 import { AuthContext } from "../auth/AuthContext";
 import PublicRoutes from "./PublicRoutes";
 import PrivateRoutes from "./PrivateRoutes";
@@ -68,6 +71,9 @@ const AppRoutes: React.FC = () => {
       <Route element={<PrivateRoutes allowedRoles={[ROLES.ADMIN]} />}>
         <Route path="/sedes" element={<HeadquarterPage />} />
         <Route path="/usuarios" element={<UsersPage />} />
+        <Route path="/ciudades" element={<CityPage />} />
+        <Route path="/estados" element={<StatePage />} />
+        <Route path="/paises" element={<CountryPage />} />
       </Route>
       {/* Admin and Adviser Routes */}{" "}
       <Route

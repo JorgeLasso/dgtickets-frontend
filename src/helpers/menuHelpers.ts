@@ -39,6 +39,18 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
       return userRole === ROLES.ADMIN;
     }
 
+    if (item.key === "/ciudades") {
+      return userRole === ROLES.ADMIN;
+    }
+
+    if (item.key === "/estados") {
+      return userRole === ROLES.ADMIN;
+    }
+
+    if (item.key === "/paises") {
+      return userRole === ROLES.ADMIN;
+    }
+
     // Admin and Adviser Routes
     if (item.key === "/medicamentos") {
       return userRole === ROLES.ADMIN || userRole === ROLES.ADVISER;
