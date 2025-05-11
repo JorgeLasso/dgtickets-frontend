@@ -51,6 +51,10 @@ export const getFilteredMenuItems = (auth: AuthState | null) => {
       return userRole === ROLES.ADMIN;
     }
 
+    if (item.key === "/kpis") {
+      return userRole === ROLES.ADMIN;
+    }
+
     // Admin and Adviser Routes
     if (item.key === "/medicamentos") {
       return userRole === ROLES.ADMIN || userRole === ROLES.ADVISER;

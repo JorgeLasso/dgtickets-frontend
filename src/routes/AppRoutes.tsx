@@ -15,6 +15,7 @@ import PQRsPage from "../pages/PQRsPage";
 import CityPage from "../pages/CityPage";
 import StatePage from "../pages/StatePage";
 import CountryPage from "../pages/CountryPage";
+import KPIsDashboardPage from "../pages/KPIsDashboardPage";
 import { AuthContext } from "../auth/AuthContext";
 import PublicRoutes from "./PublicRoutes";
 import PrivateRoutes from "./PrivateRoutes";
@@ -74,6 +75,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/ciudades" element={<CityPage />} />
         <Route path="/estados" element={<StatePage />} />
         <Route path="/paises" element={<CountryPage />} />
+        <Route path="/kpis" element={<KPIsDashboardPage />} />
       </Route>
       {/* Admin and Adviser Routes */}{" "}
       <Route

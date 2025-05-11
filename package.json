@@ -12,6 +12,7 @@
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
+    "@ant-design/charts": "^2.2.7",
     "@ant-design/icons": "^5.6.1",
     "@types/react-responsive": "^8.0.8",
     "antd": "^5.24.2",
@@ -19,7 +20,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-responsive": "^10.0.1",
-    "react-router": "^7.2.0"
+    "react-router": "^7.2.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

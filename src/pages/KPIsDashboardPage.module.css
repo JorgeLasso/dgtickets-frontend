@@ -1,0 +1,47 @@
+.kpiDashboard {
+  margin-bottom: 24px;
+}
+
+.kpiDashboardHeader {
+  margin-bottom: 24px;
+}
+
+.kpiDashboardTitle {
+  margin-bottom: 8px !important;
+}
+
+.kpiDashboardSubtitle {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.kpiFilterContainer {
+  margin-bottom: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.kpiSection {
+  margin-bottom: 32px;
+}
+
+.kpiCard {
+  height: 100%;
+  transition: all 0.3s;
+}
+
+.kpiCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .kpiDashboardTitle {
+    font-size: 24px;
+  }
+
+  .kpiFilterContainer {
+    flex-direction: column;
+  }
+}
