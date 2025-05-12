@@ -210,9 +210,16 @@ const AdviserPage = () => {
           },
           {
             label: "Tiempo de espera",
-            value: ticket.pendingTimeInSeconds
-              ? formatTime(ticket.pendingTimeInSeconds)
-              : "N/A",
+            value:
+              ticket.createdAt && ticket.updatedAt
+                ? formatTime(
+                    Math.floor(
+                      (new Date(ticket.updatedAt).getTime() -
+                        new Date(ticket.createdAt).getTime()) /
+                        1000
+                    )
+                  )
+                : "N/A",
           },
         ],
         actions: [
@@ -364,10 +371,10 @@ const AdviserPage = () => {
                         </Col>
                         <Col xs={24} md={6}>
                           <Statistic
-                            title="Tiempo de Procesamiento"
+                            title="Tiempo de Espera"
                             value={
-                              ticket.processingTimeInSeconds
-                                ? formatTime(ticket.processingTimeInSeconds)
+                              ticket.pendingTimeInSeconds
+                                ? formatTime(ticket.pendingTimeInSeconds)
                                 : "0m 00s"
                             }
                             prefix={<ClockCircleOutlined />}

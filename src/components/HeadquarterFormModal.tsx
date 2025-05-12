@@ -35,49 +35,44 @@ const HeadquarterFormModal: React.FC<HeadquarterFormModalProps> = ({
     filterCitiesByState,
     isLoading: citiesLoading,
   } = useCities();
+
   useEffect(() => {
-    if (initialValues?.cityId) {
-      const city = filteredCities.find(
-        (city) => city.id === initialValues.cityId
-      );
-
-      if (city) {
-        console.log("City found in filteredCities:", city);
-        setSelectedState(city.stateId);
-        form.setFieldsValue({
-          ...initialValues,
-          stateId: city.stateId,
-        });
-      } else {
-        const findStateForCity = async () => {
-          for (const state of states) {
-            filterCitiesByState(state.id);
-
-            // We need to wait for the cities to be filtered
-            await new Promise((resolve) => setTimeout(resolve, 50));
-
-            // Check if the city is in this state's cities
-            const citiesInState = filteredCities;
-            const cityFound = citiesInState.find(
-              (c) => c.id === initialValues.cityId
-            );
-
-            if (cityFound) {
-              console.log("Found city in state:", state.name);
-              setSelectedState(state.id);
-              form.setFieldsValue({
-                ...initialValues,
-                stateId: state.id,
-              });
-              break;
-            }
+    if (!isVisible || !initialValues?.cityId) return;
+    let initialized = false;
+    const city = filteredCities.find(
+      (city) => city.id === initialValues.cityId
+    );
+    if (city) {
+      setSelectedState(city.stateId);
+      form.setFieldsValue({
+        ...initialValues,
+        stateId: city.stateId,
+      });
+      initialized = true;
+    } else {
+      const findStateForCity = async () => {
+        for (const state of states) {
+          filterCitiesByState(state.id);
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          const citiesInState = filteredCities;
+          const cityFound = citiesInState.find(
+            (c) => c.id === initialValues.cityId
+          );
+          if (cityFound) {
+            setSelectedState(state.id);
+            form.setFieldsValue({
+              ...initialValues,
+              stateId: state.id,
+            });
+            initialized = true;
+            break;
           }
-        };
-
-        findStateForCity();
-      }
+        }
+      };
+      if (!initialized) findStateForCity();
     }
-  }, [initialValues, filteredCities, states, filterCitiesByState, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible, initialValues?.cityId, states]);
 
   useEffect(() => {
     if (selectedState) {

@@ -1,5 +1,5 @@
 import React from "react";
-import { Pie, Column, Bar } from "@ant-design/charts";
+import { Column, Bar } from "@ant-design/charts";
 import { Card, Row, Col, Divider, Typography, Empty, Spin } from "antd";
 import { Ticket } from "../types/ticket/ticket.types";
 import styles from "../pages/KPIsDashboardPage.module.css";
@@ -7,8 +7,7 @@ import styles from "../pages/KPIsDashboardPage.module.css";
 const { Title } = Typography;
 
 interface TicketDistributionProps {
-  priorityTicketsCount: number;
-  normalTicketsCount: number;
+  completedTickets: Ticket[];
   isLoading: boolean;
 }
 
@@ -22,11 +21,6 @@ interface WaitTimeChartProps {
 interface MedicineChartProps {
   medicineData: Array<{ medicine: { name: string }; quantity: number }>;
   isLoading: boolean;
-}
-
-interface TicketDistributionData {
-  type: string;
-  value: number;
 }
 
 interface WaitTimeData {
@@ -44,39 +38,43 @@ interface PendingTicketsData {
 }
 
 export const TicketDistributionChart: React.FC<TicketDistributionProps> = ({
-  priorityTicketsCount,
-  normalTicketsCount,
+  completedTickets,
   isLoading,
 }) => {
-  const data = [
-    { type: "Prioritarios", value: priorityTicketsCount },
-    { type: "Normales", value: normalTicketsCount },
+  const moduleCountMap: Record<string | number, number> = {};
+  completedTickets.forEach((ticket) => {
+    const moduleId = ticket.moduleId || "Sin módulo";
+    moduleCountMap[moduleId] = (moduleCountMap[moduleId] || 0) + 1;
+  });
+
+  const data = Object.entries(moduleCountMap)
+    .map(([moduleId, count]) => ({
+      type: `Módulo ${moduleId}`,
+      value: count,
+      moduleId,
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  const topModuleId = data.length > 0 ? data[0].moduleId : null;
+
+  const highlightColor = "#52c41a";
+  const secondaryColors = [
+    "#1677ff",
+    "#faad14",
+    "#ff4d4f",
+    "#722ed1",
+    "#13c2c2",
+    "#b37feb",
   ];
-  const config = {
-    appendPadding: 15,
-    data,
-    angleField: "value",
-    colorField: "type",
-    radius: 0.75,
-    label: {
-      type: "outer",
-      content: "{name} {percentage}",
-      offset: 20,
-    },
-    interactions: [{ type: "pie-legend-active" }, { type: "element-active" }],
-    legend: {
-      position: "bottom",
-      flipPage: false,
-      itemHeight: 20,
-    },
-    tooltip: {
-      formatter: (datum: TicketDistributionData) => {
-        return { name: datum.type, value: datum.value };
-      },
-    },
-    color: ["#ff4d4f", "#1677ff"],
-    autoFit: true,
-  };
+  const colorMap: Record<string, string> = {};
+  data.forEach((item, idx) => {
+    if (item.moduleId === topModuleId) {
+      colorMap[item.type] = highlightColor;
+    } else {
+      colorMap[item.type] = secondaryColors[(idx - 1) % secondaryColors.length];
+    }
+  });
+
   if (isLoading) {
     return (
       <Card className={styles.kpiCard}>
@@ -85,18 +83,46 @@ export const TicketDistributionChart: React.FC<TicketDistributionProps> = ({
     );
   }
 
-  if (priorityTicketsCount === 0 && normalTicketsCount === 0) {
+  if (completedTickets.length === 0) {
     return (
       <Card className={styles.kpiCard}>
-        <Empty description="Sin datos disponibles" />
+        <Empty description="No hay tickets completados para mostrar" />
       </Card>
     );
   }
+
+  const config = {
+    data,
+    xField: "type",
+    yField: "value",
+    padding: [50, 30, 90, 40],
+    minColumnWidth: 40,
+    maxColumnWidth: 60,
+    columnWidthRatio: 0.5,
+    label: false,
+    tooltip: {
+      formatter: (datum: { type: string; value: number }) => {
+        return { name: datum.type, value: datum.value };
+      },
+    },
+    color: ({ type }: { type: string }) => colorMap[type] || secondaryColors[0],
+    meta: {
+      value: {
+        alias: "Tickets Completados",
+      },
+    },
+    autoFit: true,
+    animation: {
+      appear: {
+        animation: "fade-in",
+      },
+    },
+  };
   return (
     <Card className={styles.kpiCard}>
-      <Title level={5}>Distribución de Tickets</Title>
+      <Title level={5}>Tickets Completados por Módulo</Title>
       <div>
-        <Pie {...config} />
+        <Column {...config} />
       </div>
     </Card>
   );
@@ -121,13 +147,7 @@ export const WaitTimeChart: React.FC<WaitTimeChartProps> = ({
     minColumnWidth: 40,
     maxColumnWidth: 60,
     columnWidthRatio: 0.5,
-    label: {
-      formatter: (datum: WaitTimeData) => {
-        return datum.value !== undefined && datum.value !== null
-          ? `${datum.value.toFixed(1)} min`
-          : "0.0 min";
-      },
-    },
+    label: false,
     tooltip: {
       formatter: (datum: WaitTimeData) => {
         const formattedValue =
@@ -184,9 +204,7 @@ export const TopMedicinesChart: React.FC<MedicineChartProps> = ({
   isLoading,
 }) => {
   const processedData = medicineData
-    .slice()
-    .sort((a, b) => b.quantity - a.quantity)
-    .slice(0, 5) //
+    .slice(0, 5) // Tomar los 5 medicamentos con mayor cantidad
     .map((item) => ({
       name: item.medicine.name,
       quantity: item.quantity,
@@ -223,15 +241,16 @@ export const TopMedicinesChart: React.FC<MedicineChartProps> = ({
   if (isLoading) {
     return (
       <Card className={styles.kpiCard}>
+        <Title level={5}>Top 5 Medicamentos Solicitados</Title>
         <Spin spinning={true} size="large" />
       </Card>
     );
   }
-
   if (processedData.length === 0) {
     return (
       <Card className={styles.kpiCard}>
-        <Empty description="Sin datos disponibles" />
+        <Title level={5}>Top 5 Medicamentos Solicitados</Title>
+        <Empty description="No hay datos de medicamentos para la sede seleccionada" />
       </Card>
     );
   }
@@ -249,21 +268,30 @@ const KPIsCharts: React.FC<{
   priorityTicketsData: PendingTicketsData;
   normalTicketsData: PendingTicketsData;
   inProgressTickets: Ticket[];
-  ticketHistory: Ticket[];
+  completedTickets: Ticket[];
+  ticketMedicines?: Array<{ name: string; quantity: number }>;
+  isMedicinesLoading?: boolean;
   isLoading: boolean;
 }> = ({
   priorityTicketsData,
   normalTicketsData,
   inProgressTickets,
-  ticketHistory,
+  completedTickets,
+  ticketMedicines = [],
+  isMedicinesLoading = false,
   isLoading,
 }) => {
+  const completedTicketMedicines = ticketMedicines.map((medicine) => ({
+    medicine: { name: medicine.name },
+    quantity: medicine.quantity,
+  }));
+
   const hasData =
     (priorityTicketsData?.tickets?.length || 0) > 0 ||
     (normalTicketsData?.tickets?.length || 0) > 0 ||
     (inProgressTickets?.length || 0) > 0 ||
-    (ticketHistory?.length || 0) > 0;
-
+    (completedTickets?.length || 0) > 0 ||
+    (completedTicketMedicines?.length || 0) > 0;
   if (!hasData && !isLoading) {
     return (
       <>
@@ -294,45 +322,14 @@ const KPIsCharts: React.FC<{
       </>
     );
   }
-
-  const getMedicineData = () => {
-    const allMedicines: Record<string, number> = {};
-
-    if (inProgressTickets && inProgressTickets.length > 0) {
-      inProgressTickets.forEach((ticket) => {
-        if (ticket.ticketMedicines && Array.isArray(ticket.ticketMedicines)) {
-          ticket.ticketMedicines.forEach((med) => {
-            if (med && med.medicine && med.medicine.name) {
-              const medicineName = med.medicine.name;
-              allMedicines[medicineName] =
-                (allMedicines[medicineName] || 0) + (med.quantity || 1);
-            } else if (med && med.quantity) {
-              allMedicines["Medicamento sin nombre"] =
-                (allMedicines["Medicamento sin nombre"] || 0) + med.quantity;
-            }
-          });
-        }
-      });
-    }
-
-    const result = Object.entries(allMedicines).map(([name, quantity]) => ({
-      medicine: { name },
-      quantity,
-    }));
-
-    console.log("Datos de medicamentos procesados:", result);
-    return result;
-  };
-
-  const medicineData = getMedicineData();
   const hasLimitedData =
     ((priorityTicketsData?.tickets?.length || 0) < 2 &&
       (normalTicketsData?.tickets?.length || 0) < 2) ||
-    medicineData.length < 2;
+    completedTicketMedicines.length < 2;
   return (
     <>
-      <Divider orientation="left">Estadísticas y Gráficos</Divider>
-      {hasLimitedData && !isLoading && (
+      <Divider orientation="left">Estadísticas y Gráficos</Divider>{" "}
+      {hasLimitedData && !isLoading && !isMedicinesLoading && (
         <Card>
           <div>
             <span>⚠️</span>
@@ -347,11 +344,10 @@ const KPIsCharts: React.FC<{
       <Row gutter={[16, 24]}>
         <Col xs={24} md={12}>
           <TicketDistributionChart
-            priorityTicketsCount={priorityTicketsData?.tickets?.length || 0}
-            normalTicketsCount={normalTicketsData?.tickets?.length || 0}
+            completedTickets={completedTickets}
             isLoading={isLoading}
           />
-        </Col>
+        </Col>{" "}
         <Col xs={24} md={12}>
           <WaitTimeChart
             priorityWaitTime={
@@ -383,32 +379,26 @@ const KPIsCharts: React.FC<{
                 : 60
             }
             completionTime={
-              ticketHistory && ticketHistory.length > 0
-                ? ticketHistory
-                    .filter(
-                      (ticket) =>
-                        ticket.processingTimeInSeconds !== null &&
-                        ticket.processingTimeInSeconds !== undefined
-                    )
-                    .reduce(
-                      (sum, ticket) =>
-                        sum + (ticket.processingTimeInSeconds || 0),
-                      0
-                    ) /
-                  (ticketHistory.filter(
-                    (ticket) =>
-                      ticket.processingTimeInSeconds !== null &&
-                      ticket.processingTimeInSeconds !== undefined
+              completedTickets && completedTickets.length > 0
+                ? completedTickets
+                    .filter((ticket) => ticket.createdAt && ticket.updatedAt)
+                    .reduce((sum, ticket) => {
+                      const createdAt = new Date(ticket.createdAt).getTime();
+                      const completedAt = new Date(ticket.updatedAt).getTime();
+                      return sum + (completedAt - createdAt) / 1000;
+                    }, 0) /
+                  (completedTickets.filter(
+                    (ticket) => ticket.createdAt && ticket.updatedAt
                   ).length || 1)
                 : 0
             }
             isLoading={isLoading}
           />{" "}
-        </Col>
+        </Col>{" "}
         <Col xs={24} style={{ marginTop: 8 }}>
           <TopMedicinesChart
-            medicineData={medicineData}
-            isLoading={isLoading}
+            medicineData={completedTicketMedicines}
+            isLoading={isMedicinesLoading}
           />
         </Col>
       </Row>

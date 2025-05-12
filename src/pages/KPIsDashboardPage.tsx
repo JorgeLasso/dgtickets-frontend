@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
   Row,
   Col,
@@ -28,8 +28,10 @@ import { HeadquarterContext } from "../context/HeadquarterContext";
 import usePendingTickets from "../hooks/usePendingTickets";
 import useInProgressTickets from "../hooks/useInProgressTickets";
 import useMedicines from "../hooks/useMedicines";
-import useTicketHistory from "../hooks/useTicketHistory";
+import useTickets from "../hooks/useTickets";
+import useHeadquarters from "../hooks/useHeadquarters";
 import { Ticket } from "../types/ticket/ticket.types";
+import { HeadquarterMedicine } from "../types/headquarters/headquarter.types";
 import HeadquarterSelector from "../components/HeadquarterSelector";
 import KPIsCharts from "../components/KPIsCharts";
 import {
@@ -44,6 +46,55 @@ const { Title, Text } = Typography;
 const KPIsDashboardPage: React.FC = () => {
   const { selectedHeadquarter } = useContext(HeadquarterContext)!;
   const [refreshing, setRefreshing] = useState(false);
+  const [ticketMedicines, setTicketMedicines] = useState<
+    Array<{ name: string; quantity: number }>
+  >([]);
+  const [headquarterMedicines, setHeadquarterMedicines] = useState<
+    HeadquarterMedicine[]
+  >([]);
+  const [isLoadingHeadquarterMedicines, setIsLoadingHeadquarterMedicines] =
+    useState<boolean>(false);
+
+  const {
+    tickets: completedTickets,
+    isLoading: isLoadingCompleted,
+    reloadTickets: reloadCompletedTickets,
+    getMedicinesFromCompletedTickets,
+    isMedicinesLoading,
+  } = useTickets("COMPLETED", selectedHeadquarter || 0);
+
+  const { getMedicinesByHeadquarter } = useHeadquarters();
+
+  useEffect(() => {
+    if (selectedHeadquarter) {
+      setIsLoadingHeadquarterMedicines(true);
+      getMedicinesByHeadquarter(selectedHeadquarter)
+        .then((medicines) => {
+          if (medicines) {
+            setHeadquarterMedicines(medicines);
+          } else {
+            setHeadquarterMedicines([]);
+          }
+        })
+        .catch((error) => {
+          console.error("Error al obtener medicamentos de la sede:", error);
+          setHeadquarterMedicines([]);
+        })
+        .finally(() => {
+          setIsLoadingHeadquarterMedicines(false);
+        });
+    } else {
+      setHeadquarterMedicines([]);
+    }
+  }, [selectedHeadquarter, getMedicinesByHeadquarter]);
+
+  React.useEffect(() => {
+    if (completedTickets.length > 0) {
+      getMedicinesFromCompletedTickets().then((medicines) => {
+        setTicketMedicines(medicines);
+      });
+    }
+  }, [completedTickets, getMedicinesFromCompletedTickets]);
 
   const priorityTicketsData = usePendingTickets(
     "priority",
@@ -53,15 +104,11 @@ const KPIsDashboardPage: React.FC = () => {
 
   const { tickets: inProgressTickets, isLoading: isLoadingInProgress } =
     useInProgressTickets(selectedHeadquarter || 0);
-
   const {
     medicines,
     totalMedicines,
-    isLoading: isMedicinesLoading,
+    isLoading: isLoadingMedicines,
   } = useMedicines({ limit: 100 });
-
-  const { tickets: ticketHistory, isLoading: isHistoryLoading } =
-    useTicketHistory(undefined, { limit: 100 });
 
   const calculateKPIs = () => {
     const totalPendingTickets =
@@ -69,14 +116,27 @@ const KPIsDashboardPage: React.FC = () => {
       (normalTicketsData?.tickets?.length || 0);
 
     const totalInProgressTickets = inProgressTickets?.length || 0;
-
     const medicinesWithLowStock = medicines.filter(
       (med) => med.quantity < 10
     ).length;
-    const totalMedicineQuantity = medicines.reduce(
-      (sum, med) => sum + med.quantity,
-      0
-    );
+
+    let totalMedicineQuantity = 0;
+    if (headquarterMedicines?.length) {
+      totalMedicineQuantity = headquarterMedicines.reduce(
+        (sum, medicine) => sum + medicine.quantity,
+        0
+      );
+    } else if (ticketMedicines?.length) {
+      totalMedicineQuantity = ticketMedicines.reduce(
+        (sum, medicine) => sum + medicine.quantity,
+        0
+      );
+    } else {
+      totalMedicineQuantity = medicines.reduce(
+        (sum, med) => sum + med.quantity,
+        0
+      );
+    }
 
     const avgPriorityWaitTime =
       priorityTicketsData?.tickets?.length > 0
@@ -103,11 +163,6 @@ const KPIsDashboardPage: React.FC = () => {
           (normalTicketsData.tickets.filter((ticket) => ticket.createdAt)
             .length || 1)
         : 60;
-
-    const completedTickets =
-      ticketHistory?.filter(
-        (ticket) => ticket.processingTimeInSeconds !== null
-      ) || [];
     const totalCompletedTickets = completedTickets.length;
 
     let avgCompletionTime = 0;
@@ -124,7 +179,13 @@ const KPIsDashboardPage: React.FC = () => {
         }, 0) / completedTickets.length;
     }
     let medicinesDeliveredCount = 0;
-    if (inProgressTickets?.length) {
+
+    if (ticketMedicines?.length) {
+      medicinesDeliveredCount = ticketMedicines.reduce(
+        (sum, medicine) => sum + medicine.quantity,
+        0
+      );
+    } else if (inProgressTickets?.length) {
       medicinesDeliveredCount = inProgressTickets.reduce(
         (sum: number, ticket: Ticket) => {
           if (!ticket.ticketMedicines) return sum;
@@ -155,22 +216,16 @@ const KPIsDashboardPage: React.FC = () => {
   };
 
   const kpis = calculateKPIs();
-
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}m ${remainingSeconds}s`;
   };
-
   const handleExportTickets = () => {
     const pendingTickets = [
       ...(priorityTicketsData?.tickets || []),
       ...(normalTicketsData?.tickets || []),
     ];
-    const completedTickets =
-      ticketHistory?.filter(
-        (ticket) => ticket.processingTimeInSeconds !== null
-      ) || [];
 
     exportTicketsToExcel(
       pendingTickets,
@@ -207,10 +262,13 @@ const KPIsDashboardPage: React.FC = () => {
       onClick: handleExportKPIs,
     },
   ];
-
   const refreshAllData = () => {
     console.log("Actualizando datos...");
     setRefreshing(true);
+
+    if (reloadCompletedTickets) {
+      reloadCompletedTickets();
+    }
 
     setTimeout(() => {
       console.log("Actualizando la página para obtener nuevos datos...");
@@ -226,9 +284,11 @@ const KPIsDashboardPage: React.FC = () => {
       </div>
     );
   }
-
   const isLoading =
-    isLoadingInProgress || isMedicinesLoading || isHistoryLoading;
+    isLoadingInProgress ||
+    isLoadingMedicines ||
+    isLoadingCompleted ||
+    isLoadingHeadquarterMedicines;
 
   return (
     <div className={styles.kpiDashboard}>
@@ -315,7 +375,6 @@ const KPIsDashboardPage: React.FC = () => {
             </Card>
           </Col>
         </Row>
-
         <Divider orientation="left">Tiempos de Atención</Divider>
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={8}>
@@ -346,7 +405,6 @@ const KPIsDashboardPage: React.FC = () => {
             </Card>
           </Col>
         </Row>
-
         {/* Medicine KPIs */}
         <Divider orientation="left">Métricas de Medicamentos</Divider>
         <Row gutter={[16, 16]}>
@@ -389,29 +447,32 @@ const KPIsDashboardPage: React.FC = () => {
                 />
               )}
             </Card>
-          </Col>
+          </Col>{" "}
           <Col xs={24} sm={12} md={8}>
             <Card className={styles.kpiCard}>
               <Statistic
-                title="Inventario total de medicamentos"
+                title="Inventario total de medicamentos en sede"
                 value={kpis.totalMedicineQuantity}
                 prefix={<MedicineBoxOutlined />}
               />
             </Card>
           </Col>
-        </Row>
+        </Row>{" "}
       </Spin>{" "}
       <KPIsCharts
         priorityTicketsData={priorityTicketsData}
         normalTicketsData={normalTicketsData}
         inProgressTickets={inProgressTickets || []}
-        ticketHistory={ticketHistory || []}
+        completedTickets={completedTickets || []}
+        ticketMedicines={ticketMedicines}
+        isMedicinesLoading={isMedicinesLoading}
         isLoading={
           priorityTicketsData.isLoading ||
           normalTicketsData.isLoading ||
           isLoadingInProgress ||
-          isHistoryLoading ||
+          isLoadingMedicines ||
           isMedicinesLoading ||
+          isLoadingHeadquarterMedicines ||
           refreshing
         }
       />
