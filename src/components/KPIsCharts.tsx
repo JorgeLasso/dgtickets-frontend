@@ -1,5 +1,5 @@
 import React from "react";
-import { Column, Bar } from "@ant-design/charts";
+import { Pie, Column, Bar } from "@ant-design/charts";
 import { Card, Row, Col, Divider, Typography, Empty, Spin } from "antd";
 import { Ticket } from "../types/ticket/ticket.types";
 import styles from "../pages/KPIsDashboardPage.module.css";
@@ -55,26 +55,6 @@ export const TicketDistributionChart: React.FC<TicketDistributionProps> = ({
     }))
     .sort((a, b) => b.value - a.value);
 
-  const topModuleId = data.length > 0 ? data[0].moduleId : null;
-
-  const highlightColor = "#52c41a";
-  const secondaryColors = [
-    "#1677ff",
-    "#faad14",
-    "#ff4d4f",
-    "#722ed1",
-    "#13c2c2",
-    "#b37feb",
-  ];
-  const colorMap: Record<string, string> = {};
-  data.forEach((item, idx) => {
-    if (item.moduleId === topModuleId) {
-      colorMap[item.type] = highlightColor;
-    } else {
-      colorMap[item.type] = secondaryColors[(idx - 1) % secondaryColors.length];
-    }
-  });
-
   if (isLoading) {
     return (
       <Card className={styles.kpiCard}>
@@ -93,36 +73,38 @@ export const TicketDistributionChart: React.FC<TicketDistributionProps> = ({
 
   const config = {
     data,
-    xField: "type",
-    yField: "value",
-    padding: [50, 30, 90, 40],
-    minColumnWidth: 40,
-    maxColumnWidth: 60,
-    columnWidthRatio: 0.5,
-    label: false,
+    angleField: "value",
+    colorField: "type",
+    label: {
+      text: "value",
+      style: {
+        fontWeight: "bold",
+      },
+    },
+    legend: {
+      color: {
+        title: false,
+        position: "right",
+        rowPadding: 5,
+      },
+    },
     tooltip: {
       formatter: (datum: { type: string; value: number }) => {
         return { name: datum.type, value: datum.value };
       },
     },
-    color: ({ type }: { type: string }) => colorMap[type] || secondaryColors[0],
-    meta: {
-      value: {
-        alias: "Tickets Completados",
-      },
-    },
-    autoFit: true,
     animation: {
       appear: {
         animation: "fade-in",
       },
     },
+    autoFit: true,
   };
   return (
     <Card className={styles.kpiCard}>
       <Title level={5}>Tickets Completados por Módulo</Title>
       <div>
-        <Column {...config} />
+        <Pie {...config} />
       </div>
     </Card>
   );
@@ -157,11 +139,7 @@ export const WaitTimeChart: React.FC<WaitTimeChartProps> = ({
         return { name: datum.type, value: formattedValue };
       },
     },
-    color: ({ type }: { type: string }) => {
-      if (type === "Espera Prioritarios") return "#ff4d4f";
-      if (type === "Espera Normales") return "#1677ff";
-      return "#52c41a";
-    },
+    colorField: "type",
     meta: {
       value: {
         alias: "Minutos",
@@ -203,12 +181,10 @@ export const TopMedicinesChart: React.FC<MedicineChartProps> = ({
   medicineData,
   isLoading,
 }) => {
-  const processedData = medicineData
-    .slice(0, 5) // Tomar los 5 medicamentos con mayor cantidad
-    .map((item) => ({
-      name: item.medicine.name,
-      quantity: item.quantity,
-    }));
+  const processedData = medicineData.slice(0, 5).map((item) => ({
+    name: item.medicine.name,
+    quantity: item.quantity,
+  }));
   const config = {
     data: processedData,
     xField: "quantity",
@@ -219,6 +195,7 @@ export const TopMedicinesChart: React.FC<MedicineChartProps> = ({
       position: "top-right",
       flipPage: false,
     },
+    colorField: "name",
     meta: {
       quantity: {
         alias: "Cantidad",
