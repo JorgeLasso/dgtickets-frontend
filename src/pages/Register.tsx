@@ -206,8 +206,10 @@ const Register: React.FC = () => {
           >
             {isLoading ? "Registrando..." : "Registrarse"}
           </Button>
-          <Row justify="center" style={{ marginTop: 10 }}>
-            <Link to="/login">Regresar</Link>
+          <Row style={{ marginTop: 10 }}>
+            <span>
+              ¿Ya tienes una cuenta? <Link to="/login">Ingresa aquí</Link>
+            </span>
           </Row>
         </Form.Item>
       </Form>
