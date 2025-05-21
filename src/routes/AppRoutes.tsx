@@ -83,11 +83,14 @@ const AppRoutes: React.FC = () => {
       >
         <Route path="/medicamentos" element={<MedicinesPage />} />
         <Route path="/modulos" element={<ModulesPage />} />
-        <Route path="/pqrs" element={<PQRsPage />} />
       </Route>
       {/* Admin, Adviser and User Routes */}
       <Route
-        element={<PrivateRoutes allowedRoles={[ROLES.ADMIN, ROLES.ADVISER]} />}
+        element={
+          <PrivateRoutes
+            allowedRoles={[ROLES.USER, ROLES.ADMIN, ROLES.ADVISER]}
+          />
+        }
       >
         <Route path="/pqrs" element={<PQRsPage />} />
       </Route>

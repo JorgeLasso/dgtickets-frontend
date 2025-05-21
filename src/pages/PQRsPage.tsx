@@ -39,6 +39,7 @@ const PQRsPage: React.FC = () => {
 
   // Check if user can answer PQRs (admin role)
   const isAdmin = auth.role === ROLES.ADMIN;
+  const isUser = auth.role === ROLES.USER;
 
   // States for modal
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -184,14 +185,16 @@ const PQRsPage: React.FC = () => {
         </Title>
       </div>
 
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={handleOpenCreateModal}
-        style={{ marginBottom: "20px" }}
-      >
-        Crear PQR
-      </Button>
+      {isUser && (
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleOpenCreateModal}
+          style={{ marginBottom: "20px" }}
+        >
+          Crear PQR
+        </Button>
+      )}
 
       {pqrs.length === 0 && !isLoading ? (
         <Empty description="No hay PQRs disponibles" />
