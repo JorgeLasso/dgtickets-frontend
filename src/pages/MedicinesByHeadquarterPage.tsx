@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Typography, Empty, Row, Col, Spin } from "antd";
+import { Typography, Empty, Row, Col, Spin, Result } from "antd";
 import CardList from "../components/CardList";
 import GenericSearchBar from "../components/GenericSearchBar";
 import Pagination from "../components/Pagination";
@@ -63,6 +63,14 @@ const MedicinesByHeadquarterPage: React.FC = () => {
       actions: [],
     };
   };
+
+  if (!selectedHeadquarter) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Result title="Por favor selecciona una sede para ver los medicamentos disponibles." />
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 20 }}>
