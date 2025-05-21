@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Card, Typography, Row, Col, Spin, Tag } from "antd";
+import { Card, Typography, Row, Col, Spin, Tag, Button } from "antd";
 import { useParams } from "react-router";
 import { MedicineBoxOutlined } from "@ant-design/icons";
 import { AuthContext } from "../auth/AuthContext";
@@ -12,6 +12,8 @@ import { TYPES } from "../constants/TicketType";
 import useTicketDetails from "../hooks/useTicketDetails";
 import useTicketPosition from "../hooks/useTicketPosition";
 import Rating from "../components/Rating";
+import useFetch from "../hooks/useFetch";
+import useNotification from "../hooks/useNotification";
 
 const { Title, Text } = Typography;
 
@@ -25,6 +27,8 @@ const TicketDetailsPage: React.FC = () => {
     useTicketPosition(ticketId);
   const { headquarters, isLoading: loadingHeadquarters } = useHeadquarters();
   const { cities, isLoading: loadingCities } = useCities();
+  const { put } = useFetch();
+  const { openNotification } = useNotification();
 
   const headquarter = headquarters.find((hq) => hq.id === selectedHeadquarter);
   const city =
@@ -34,6 +38,33 @@ const TicketDetailsPage: React.FC = () => {
     isLoadingPosition ||
     loadingHeadquarters ||
     loadingCities;
+
+  const handleCancelTicket = async () => {
+    if (!ticket) return;
+    try {
+      const confirmed = window.confirm(
+        "¿Está seguro que desea cancelar este ticket?"
+      );
+      if (!confirmed) return;
+      await put(`/tickets_/${ticket.id}`, {
+        ticketType: "CANCELLED",
+        priority: String(ticket.priority),
+        userUpdated: auth.id,
+      });
+      openNotification(
+        "success",
+        "Ticket cancelado",
+        "El ticket ha sido cancelado exitosamente."
+      );
+      window.location.reload();
+    } catch {
+      openNotification(
+        "error",
+        "Error",
+        "Ocurrió un error al cancelar el ticket."
+      );
+    }
+  };
 
   if (isLoading) {
     return (
@@ -207,6 +238,13 @@ const TicketDetailsPage: React.FC = () => {
               ticketId={ticket.id}
               initialRating={ticket.rating || null}
             />
+          </Col>
+        )}
+        {ticket.ticketType === "PENDING" && (
+          <Col xs={24} style={{ textAlign: "center", marginBottom: 16 }}>
+            <Button danger type="primary" onClick={handleCancelTicket}>
+              Cancelar Ticket
+            </Button>
           </Col>
         )}
       </Row>

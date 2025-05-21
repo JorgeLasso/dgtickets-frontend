@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Card, Typography, Row, Col, Rate, Input, Button, message } from "antd";
+import { Card, Typography, Row, Col, Rate, Input, Button } from "antd";
 import useRatings from "../hooks/useRatings";
+import useNotification from "../hooks/useNotification";
 import { Rating as RatingType } from "../types/rating/rating.types";
 
 const { Text } = Typography;
@@ -19,6 +20,7 @@ const Rating: React.FC<RatingProps> = ({ ticketId, initialRating }) => {
     ticketId,
     initialRating,
   });
+  const { openNotification } = useNotification();
 
   // Set initial rating values if a rating exists
   useEffect(() => {
@@ -37,15 +39,27 @@ const Rating: React.FC<RatingProps> = ({ ticketId, initialRating }) => {
       if (rating && rating.id) {
         // Update existing rating
         await updateRating(rating.id, ratingValue, ratingDescription);
-        message.success("Valoración actualizada con éxito");
+        openNotification(
+          "success",
+          "Valoración actualizada",
+          "Valoración actualizada con éxito"
+        );
       } else {
         // Create new rating
         await createRating(ratingValue, ratingDescription);
-        message.success("Gracias por su valoración");
+        openNotification(
+          "success",
+          "¡Gracias por su valoración!",
+          "Su valoración fue registrada correctamente."
+        );
       }
     } catch (error) {
       console.error("Error al enviar valoración:", error);
-      message.error("No se pudo enviar la valoración. Intente nuevamente.");
+      openNotification(
+        "error",
+        "Error",
+        "No se pudo enviar la valoración. Intente nuevamente."
+      );
     } finally {
       setIsSubmitting(false);
     }
