@@ -47,7 +47,7 @@ const TicketDetailsPage: React.FC = () => {
       );
       if (!confirmed) return;
       await put(`/tickets_/${ticket.id}`, {
-        ticketType: "CANCELLED",
+        ticketType: "CANCELED",
         priority: String(ticket.priority),
         userUpdated: auth.id,
       });

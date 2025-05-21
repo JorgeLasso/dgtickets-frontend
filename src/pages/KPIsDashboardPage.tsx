@@ -12,6 +12,7 @@ import {
   Tooltip,
   Space,
   Dropdown,
+  DatePicker,
 } from "antd";
 import type { MenuProps } from "antd";
 import {
@@ -41,6 +42,7 @@ import {
 } from "../utils/excelExport";
 import styles from "./KPIsDashboardPage.module.css";
 import { TYPES } from "../constants/TicketType";
+import { Dayjs } from "dayjs";
 
 const { Title, Text } = Typography;
 
@@ -55,6 +57,10 @@ const KPIsDashboardPage: React.FC = () => {
   >([]);
   const [isLoadingHeadquarterMedicines, setIsLoadingHeadquarterMedicines] =
     useState<boolean>(false);
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([
+    null,
+    null,
+  ]);
 
   const {
     tickets: completedTickets,
@@ -111,12 +117,45 @@ const KPIsDashboardPage: React.FC = () => {
     isLoading: isLoadingMedicines,
   } = useMedicines({ limit: 100 });
 
+  const filterByDateRange = <
+    T extends { createdAt?: string; updatedAt?: string }
+  >(
+    items: T[]
+  ): T[] => {
+    if (!dateRange || !dateRange[0] || !dateRange[1]) return items;
+    const start = dateRange[0].startOf("day").toDate().getTime();
+    const end = dateRange[1].endOf("day").toDate().getTime();
+    return items.filter((item) => {
+      const created = item.createdAt
+        ? new Date(item.createdAt).getTime()
+        : null;
+      const updated = item.updatedAt
+        ? new Date(item.updatedAt).getTime()
+        : null;
+      // Check if either created or updated date falls within the range
+      return (
+        (created && created >= start && created <= end) ||
+        (updated && updated >= start && updated <= end)
+      );
+    });
+  };
+
+  // Filter tickets by date range
+  const filteredCompletedTickets = filterByDateRange(completedTickets);
+  const filteredInProgressTickets = filterByDateRange(inProgressTickets || []);
+  const filteredPriorityTickets = filterByDateRange(
+    priorityTicketsData?.tickets || []
+  );
+  const filteredNormalTickets = filterByDateRange(
+    normalTicketsData?.tickets || []
+  );
+
   const calculateKPIs = () => {
     const totalPendingTickets =
-      (priorityTicketsData?.tickets?.length || 0) +
-      (normalTicketsData?.tickets?.length || 0);
+      (filteredPriorityTickets?.length || 0) +
+      (filteredNormalTickets?.length || 0);
 
-    const totalInProgressTickets = inProgressTickets?.length || 0;
+    const totalInProgressTickets = filteredInProgressTickets?.length || 0;
     const medicinesWithLowStock = medicines.filter(
       (med) => med.quantity < 10
     ).length;
@@ -140,44 +179,44 @@ const KPIsDashboardPage: React.FC = () => {
     }
 
     const avgPriorityWaitTime =
-      priorityTicketsData?.tickets?.length > 0
-        ? priorityTicketsData.tickets
+      filteredPriorityTickets?.length > 0
+        ? filteredPriorityTickets
             .filter((ticket) => ticket.createdAt)
             .reduce((sum, ticket) => {
               const createdAt = new Date(ticket.createdAt).getTime();
               const now = new Date().getTime();
               return sum + (now - createdAt) / 1000;
             }, 0) /
-          (priorityTicketsData.tickets.filter((ticket) => ticket.createdAt)
+          (filteredPriorityTickets.filter((ticket) => ticket.createdAt)
             .length || 1)
         : 30;
 
     const avgNormalWaitTime =
-      normalTicketsData?.tickets?.length > 0
-        ? normalTicketsData.tickets
+      filteredNormalTickets?.length > 0
+        ? filteredNormalTickets
             .filter((ticket) => ticket.createdAt)
             .reduce((sum, ticket) => {
               const createdAt = new Date(ticket.createdAt).getTime();
               const now = new Date().getTime();
               return sum + (now - createdAt) / 1000;
             }, 0) /
-          (normalTicketsData.tickets.filter((ticket) => ticket.createdAt)
-            .length || 1)
+          (filteredNormalTickets.filter((ticket) => ticket.createdAt).length ||
+            1)
         : 60;
-    const totalCompletedTickets = completedTickets.length;
+    const totalCompletedTickets = filteredCompletedTickets.length;
 
     let avgCompletionTime = 0;
     if (
-      completedTickets.length > 0 &&
-      completedTickets[0].createdAt &&
-      completedTickets[0].updatedAt
+      filteredCompletedTickets.length > 0 &&
+      filteredCompletedTickets[0].createdAt &&
+      filteredCompletedTickets[0].updatedAt
     ) {
       avgCompletionTime =
-        completedTickets.reduce((sum, ticket) => {
+        filteredCompletedTickets.reduce((sum, ticket) => {
           const created = new Date(ticket.createdAt).getTime();
           const completed = new Date(ticket.updatedAt).getTime();
           return sum + (completed - created) / 1000; // in seconds
-        }, 0) / completedTickets.length;
+        }, 0) / filteredCompletedTickets.length;
     }
     let medicinesDeliveredCount = 0;
 
@@ -224,14 +263,14 @@ const KPIsDashboardPage: React.FC = () => {
   };
   const handleExportTickets = () => {
     const pendingTickets = [
-      ...(priorityTicketsData?.tickets || []),
-      ...(normalTicketsData?.tickets || []),
+      ...(filteredPriorityTickets || []),
+      ...(filteredNormalTickets || []),
     ];
 
     exportTicketsToExcel(
       pendingTickets,
-      inProgressTickets || [],
-      completedTickets
+      filteredInProgressTickets || [],
+      filteredCompletedTickets
     );
   };
 
@@ -290,7 +329,7 @@ const KPIsDashboardPage: React.FC = () => {
     isLoadingCompleted ||
     isLoadingHeadquarterMedicines;
 
-  const ratings = completedTickets
+  const ratings = filteredCompletedTickets
     .map((ticket) => ticket.rating?.value)
     .filter((value) => typeof value === "number");
 
@@ -300,10 +339,10 @@ const KPIsDashboardPage: React.FC = () => {
       : null;
 
   const allTickets = [
-    ...(priorityTicketsData?.tickets || []),
-    ...(normalTicketsData?.tickets || []),
-    ...(inProgressTickets || []),
-    ...(completedTickets || []),
+    ...(filteredPriorityTickets || []),
+    ...(filteredNormalTickets || []),
+    ...(filteredInProgressTickets || []),
+    ...(filteredCompletedTickets || []),
   ];
   const ticketTypeCounts = allTickets.reduce((acc, ticket) => {
     const typeKey = ticket.ticketType || "Sin estado";
@@ -333,6 +372,20 @@ const KPIsDashboardPage: React.FC = () => {
           </Col>
           <Col>
             <Space>
+              <DatePicker.RangePicker
+                allowClear
+                value={dateRange}
+                onChange={(range) => {
+                  if (!range) {
+                    setDateRange([null, null]);
+                  } else {
+                    setDateRange(range as [Dayjs | null, Dayjs | null]);
+                  }
+                }}
+                format="DD/MM/YYYY"
+                style={{ marginRight: 8 }}
+                placeholder={["Fecha inicio", "Fecha fin"]}
+              />
               <Tooltip title="Actualizar datos">
                 <Button
                   type="primary"
@@ -502,10 +555,16 @@ const KPIsDashboardPage: React.FC = () => {
         </Row>{" "}
       </Spin>{" "}
       <KPIsCharts
-        priorityTicketsData={priorityTicketsData}
-        normalTicketsData={normalTicketsData}
-        inProgressTickets={inProgressTickets || []}
-        completedTickets={completedTickets || []}
+        priorityTicketsData={{
+          ...priorityTicketsData,
+          tickets: filteredPriorityTickets,
+        }}
+        normalTicketsData={{
+          ...normalTicketsData,
+          tickets: filteredNormalTickets,
+        }}
+        inProgressTickets={filteredInProgressTickets}
+        completedTickets={filteredCompletedTickets}
         ticketMedicines={ticketMedicines}
         isMedicinesLoading={isMedicinesLoading}
         isLoading={
