@@ -36,9 +36,9 @@ import { HeadquarterMedicine } from "../types/headquarters/headquarter.types";
 import HeadquarterSelector from "../components/HeadquarterSelector";
 import KPIsCharts from "../components/KPIsCharts";
 import {
-  exportTicketsToExcel,
-  exportMedicinesToExcel,
-  exportKPIsToExcel,
+  exportTicketsToExcelUnified,
+  exportMedicinesToExcelUnified,
+  exportKPIsToExcelUnified,
 } from "../utils/excelExport";
 import styles from "./KPIsDashboardPage.module.css";
 import { TYPES } from "../constants/TicketType";
@@ -48,6 +48,7 @@ const { Title, Text } = Typography;
 
 const KPIsDashboardPage: React.FC = () => {
   const { selectedHeadquarter } = useContext(HeadquarterContext)!;
+  const { headquarters, getMedicinesByHeadquarter } = useHeadquarters();
   const [refreshing, setRefreshing] = useState(false);
   const [ticketMedicines, setTicketMedicines] = useState<
     Array<{ name: string; quantity: number }>
@@ -69,8 +70,6 @@ const KPIsDashboardPage: React.FC = () => {
     getMedicinesFromCompletedTickets,
     isMedicinesLoading,
   } = useTickets("COMPLETED", selectedHeadquarter || 0);
-
-  const { getMedicinesByHeadquarter } = useHeadquarters();
 
   useEffect(() => {
     if (selectedHeadquarter) {
@@ -262,24 +261,21 @@ const KPIsDashboardPage: React.FC = () => {
     return `${minutes}m ${remainingSeconds}s`;
   };
   const handleExportTickets = () => {
-    const pendingTickets = [
+    const allTickets = [
       ...(filteredPriorityTickets || []),
       ...(filteredNormalTickets || []),
+      ...(filteredInProgressTickets || []),
+      ...(filteredCompletedTickets || []),
     ];
-
-    exportTicketsToExcel(
-      pendingTickets,
-      filteredInProgressTickets || [],
-      filteredCompletedTickets
-    );
+    exportTicketsToExcelUnified(allTickets, headquarters);
   };
 
   const handleExportMedicines = () => {
-    exportMedicinesToExcel(medicines);
+    exportMedicinesToExcelUnified(medicines, headquarters);
   };
 
   const handleExportKPIs = () => {
-    exportKPIsToExcel(kpis);
+    exportKPIsToExcelUnified(kpis);
   };
 
   const exportItems: MenuProps["items"] = [

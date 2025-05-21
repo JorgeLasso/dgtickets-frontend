@@ -42,3 +42,15 @@ export interface KPIsChartsProps {
   ratings?: number[];
   ticketTypeData?: { type: string; count: number }[];
 }
+
+export interface KPIsExport {
+  totalPendingTickets: number;
+  totalInProgressTickets: number;
+  totalCompletedTickets: number;
+  medicinesWithLowStock: number;
+  totalMedicineQuantity: number;
+  avgPriorityWaitTime: number;
+  avgNormalWaitTime: number;
+  avgCompletionTime: number;
+  medicinesDeliveredCount: number;
+}
