@@ -84,7 +84,9 @@ const CreateTicket: React.FC = () => {
     };
   }, []);
   const checkForPendingTickets = () => {
-    const pendingTicket = tickets.length > 0 ? tickets[0] : null;
+    const pendingTicket = tickets.find(
+      (ticket) => ticket.ticketType === "PENDING"
+    );
     return pendingTicket;
   };
   const createNewTicket = async () => {
