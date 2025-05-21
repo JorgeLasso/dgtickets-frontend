@@ -1,41 +1,16 @@
 import React from "react";
 import { Pie, Column, Bar } from "@ant-design/charts";
 import { Card, Row, Col, Divider, Typography, Empty, Spin } from "antd";
-import { Ticket } from "../types/ticket/ticket.types";
+import {
+  KPIsChartsProps,
+  WaitTimeData,
+  WaitTimeChartProps,
+  TicketDistributionProps,
+  MedicineChartProps,
+} from "../types/kpis/kpis.types";
 import styles from "../pages/KPIsDashboardPage.module.css";
 
 const { Title } = Typography;
-
-interface TicketDistributionProps {
-  completedTickets: Ticket[];
-  isLoading: boolean;
-}
-
-interface WaitTimeChartProps {
-  priorityWaitTime: number;
-  normalWaitTime: number;
-  completionTime: number;
-  isLoading: boolean;
-}
-
-interface MedicineChartProps {
-  medicineData: Array<{ medicine: { name: string }; quantity: number }>;
-  isLoading: boolean;
-}
-
-interface WaitTimeData {
-  type: string;
-  value: number;
-}
-
-interface PendingTicketsData {
-  tickets: Ticket[];
-  isLoading: boolean;
-  error: unknown;
-  count?: number;
-  avgPending?: number;
-  avgProcessing?: number;
-}
 
 export const TicketDistributionChart: React.FC<TicketDistributionProps> = ({
   completedTickets,
@@ -241,15 +216,7 @@ export const TopMedicinesChart: React.FC<MedicineChartProps> = ({
   );
 };
 
-const KPIsCharts: React.FC<{
-  priorityTicketsData: PendingTicketsData;
-  normalTicketsData: PendingTicketsData;
-  inProgressTickets: Ticket[];
-  completedTickets: Ticket[];
-  ticketMedicines?: Array<{ name: string; quantity: number }>;
-  isMedicinesLoading?: boolean;
-  isLoading: boolean;
-}> = ({
+const KPIsCharts: React.FC<KPIsChartsProps> = ({
   priorityTicketsData,
   normalTicketsData,
   inProgressTickets,
@@ -257,6 +224,8 @@ const KPIsCharts: React.FC<{
   ticketMedicines = [],
   isMedicinesLoading = false,
   isLoading,
+  ratings,
+  ticketTypeData = [],
 }) => {
   const completedTicketMedicines = ticketMedicines.map((medicine) => ({
     medicine: { name: medicine.name },
@@ -303,6 +272,96 @@ const KPIsCharts: React.FC<{
     ((priorityTicketsData?.tickets?.length || 0) < 2 &&
       (normalTicketsData?.tickets?.length || 0) < 2) ||
     completedTicketMedicines.length < 2;
+
+  let ratingsChart = null;
+  if (ratings && ratings.length > 0) {
+    const ratingCounts = [1, 2, 3, 4, 5].map((rating) => ({
+      rating: rating.toString(),
+      count: ratings.filter((r) => r === rating).length,
+    }));
+    const config = {
+      data: ratingCounts,
+      xField: "rating",
+      yField: "count",
+      colorField: "rating",
+      label: {
+        position: "top",
+      },
+      xAxis: {
+        title: { text: "Calificación" },
+      },
+      yAxis: {
+        title: { text: "Cantidad" },
+        min: 0,
+      },
+      autoFit: true,
+      animation: {
+        appear: { animation: "fade-in" },
+      },
+    };
+    ratingsChart = (
+      <Card className={styles.kpiCard} style={{ marginTop: 16 }}>
+        <Title level={5}>Distribución de Calificaciones</Title>
+        <Bar {...config} />
+      </Card>
+    );
+  } else if (ratings && ratings.length === 0) {
+    ratingsChart = (
+      <Card className={styles.kpiCard} style={{ marginTop: 16 }}>
+        <Title level={5}>Distribución de Calificaciones</Title>
+        <Spin spinning={false} size="large" />
+        <Empty description="No hay calificaciones para la sede seleccionada" />
+      </Card>
+    );
+  }
+
+  let ticketTypeChart = null;
+  if (ticketTypeData && ticketTypeData.length > 0) {
+    const config = {
+      data: ticketTypeData,
+      angleField: "count",
+      colorField: "type",
+      label: {
+        text: "count",
+        style: {
+          fontWeight: "bold",
+        },
+      },
+      legend: {
+        color: {
+          title: false,
+          position: "right",
+          rowPadding: 5,
+        },
+      },
+      tooltip: {
+        formatter: (datum: { type: string; count: number }) => {
+          return { name: datum.type, value: datum.count };
+        },
+      },
+      animation: {
+        appear: {
+          animation: "fade-in",
+        },
+      },
+      autoFit: true,
+    };
+    ticketTypeChart = (
+      <Card className={styles.kpiCard} style={{ marginTop: 16 }}>
+        <Title level={5}>Distribución de Tickets por Estado</Title>
+        <Pie {...config} />
+      </Card>
+    );
+  } else if (ticketTypeData && ticketTypeData.length === 0) {
+    ticketTypeChart = (
+      <Card className={styles.kpiCard} style={{ marginTop: 16 }}>
+        <Title level={5}>Distribución de Tickets por Estado</Title>
+        <Spin spinning={false} size="large" />
+        <Empty description="No hay tickets para graficar por estado" />
+      </Card>
+    );
+  }
+
   return (
     <>
       <Divider orientation="left">Estadísticas y Gráficos</Divider>{" "}
@@ -378,6 +437,8 @@ const KPIsCharts: React.FC<{
             isLoading={isMedicinesLoading}
           />
         </Col>
+        <Col xs={24}>{ratingsChart}</Col>
+        <Col xs={24}>{ticketTypeChart}</Col>
       </Row>
     </>
   );

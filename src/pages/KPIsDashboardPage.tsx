@@ -40,6 +40,7 @@ import {
   exportKPIsToExcel,
 } from "../utils/excelExport";
 import styles from "./KPIsDashboardPage.module.css";
+import { TYPES } from "../constants/TicketType";
 
 const { Title, Text } = Typography;
 
@@ -263,7 +264,6 @@ const KPIsDashboardPage: React.FC = () => {
     },
   ];
   const refreshAllData = () => {
-    console.log("Actualizando datos...");
     setRefreshing(true);
 
     if (reloadCompletedTickets) {
@@ -289,6 +289,35 @@ const KPIsDashboardPage: React.FC = () => {
     isLoadingMedicines ||
     isLoadingCompleted ||
     isLoadingHeadquarterMedicines;
+
+  const ratings = completedTickets
+    .map((ticket) => ticket.rating?.value)
+    .filter((value) => typeof value === "number");
+
+  const avgRating =
+    ratings.length > 0
+      ? (ratings.reduce((sum, val) => sum + val, 0) / ratings.length).toFixed(2)
+      : null;
+
+  const allTickets = [
+    ...(priorityTicketsData?.tickets || []),
+    ...(normalTicketsData?.tickets || []),
+    ...(inProgressTickets || []),
+    ...(completedTickets || []),
+  ];
+  const ticketTypeCounts = allTickets.reduce((acc, ticket) => {
+    const typeKey = ticket.ticketType || "Sin estado";
+    // Map to Spanish using TYPES, fallback to typeKey if not found
+    const type = TYPES[typeKey as keyof typeof TYPES] || typeKey;
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const ticketTypeData = Object.entries(ticketTypeCounts).map(
+    ([type, count]) => ({
+      type,
+      count,
+    })
+  );
 
   return (
     <div className={styles.kpiDashboard}>
@@ -457,6 +486,19 @@ const KPIsDashboardPage: React.FC = () => {
               />
             </Card>
           </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Card className={styles.kpiCard}>
+              <Statistic
+                title="Promedio de calificación"
+                value={avgRating !== null ? avgRating : "N/A"}
+                prefix={
+                  <span style={{ color: "#faad14", fontSize: 18 }}>★</span>
+                }
+                valueStyle={{ color: "#faad14" }}
+                suffix={avgRating !== null ? "/ 5" : ""}
+              />
+            </Card>
+          </Col>
         </Row>{" "}
       </Spin>{" "}
       <KPIsCharts
@@ -475,6 +517,8 @@ const KPIsDashboardPage: React.FC = () => {
           isLoadingHeadquarterMedicines ||
           refreshing
         }
+        ratings={ratings}
+        ticketTypeData={ticketTypeData}
       />
     </div>
   );
